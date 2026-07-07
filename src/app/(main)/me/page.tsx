@@ -15,8 +15,8 @@ import {
   User,
 } from "lucide-react";
 import { toast } from "sonner";
-import Image from "next/image";
 import { AxiosError } from "axios";
+
 import { updateProfileSchema, type UpdateUserInput } from "@/lib/validations";
 import { userService } from "@/services/userService";
 
@@ -24,16 +24,21 @@ interface ApiErrorResponse {
   message?: string;
 }
 
+interface Post {
+  id: number;
+  imageUrl: string;
+  caption?: string;
+  createdAt: string;
+}
+
 export default function MyProfilePage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // New state to transit selected avatar file
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // 1. Fetch user profile data
+  // 1. Ambil Data Profil Pengguna (Termasuk stats dari API)
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["user-profile"],
     queryFn: userService.getMe,
@@ -41,7 +46,16 @@ export default function MyProfilePage() {
 
   const user = profileData?.data?.user || profileData?.user;
 
-  // 2. FormData use React Hook Form + Zod
+  // Ambil counter stats asli dari API. Jika belum ada dari backend, default ke 0
+  const postCount = user?.postsCount || 0;
+  const followersCount = user?.followersCount || 0;
+  const followingCount = user?.followingCount || 0;
+  const likesCount = user?.likesCount || 0;
+
+  // Tempat menampung data array posts (Guna mengecek Gallery kosong atau tidak)
+  const userPosts = user?.posts || [];
+  const savedPosts = user?.saved || [];
+
   const {
     register,
     handleSubmit,
@@ -51,7 +65,6 @@ export default function MyProfilePage() {
     resolver: zodResolver(updateProfileSchema),
   });
 
-  // FormData syncronization upon fetch from api
   useEffect(() => {
     if (user) {
       reset({
@@ -62,18 +75,13 @@ export default function MyProfilePage() {
         bio: user.bio || "",
         avatarUrl: user.avatarUrl || "",
       });
-      //   setPreviewUrl(user.avatarUrl || null);
     }
   }, [user, reset]);
 
-  // 3. Mutation TanStack Query to PATCH
   const mutation = useMutation({
     mutationFn: userService.updateMe,
     onSuccess: () => {
-      // Perbarui cache data profile secara lokal tanpa refresh halaman penuh!
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-
-      // Munculkan toast hijau sukses kustom (Menggantikan CSS Alert #079455 dari Figma)
       toast.success("Profile updated successfully", {
         style: {
           background: "#079455",
@@ -92,7 +100,6 @@ export default function MyProfilePage() {
     },
   });
 
-  //   handle while file selected from file explorer
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -109,11 +116,9 @@ export default function MyProfilePage() {
     if (data.bio) formData.append("bio", data.bio);
     if (data.avatarUrl) formData.append("avatarUrl", data.avatarUrl);
 
-    // if avatar file change selected
     if (selectedFile) {
       formData.append("avatar", selectedFile);
     }
-
     mutation.mutate(formData);
   };
 
@@ -127,13 +132,13 @@ export default function MyProfilePage() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-6 pb-24 font-sans flex flex-col items-center">
-      {/* HEADER: INFO USER */}
+      {/* CARD CONTAINER PROFIL */}
       <div className="w-full max-w-[361px] flex flex-col gap-4">
+        {/* INFO USER */}
         <div className="flex items-center gap-3">
-          {/* Avatar Lingkaran (Diameter 64px sesuai Figma) */}
           <div className="w-16 h-16 rounded-full bg-zinc-800 border border-[#181D27] overflow-hidden flex items-center justify-center relative">
             {user?.avatarUrl ? (
-              <Image
+              <img
                 src={user.avatarUrl}
                 alt="Avatar"
                 className="w-full h-full object-cover"
@@ -153,14 +158,13 @@ export default function MyProfilePage() {
           </div>
         </div>
 
-        {/* Bio Text (Jika ada) */}
-        {user?.bio && (
-          <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
-            {user.bio}
-          </p>
-        )}
+        {/* BIO TEXT */}
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
+          {user?.bio ||
+            "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!"}
+        </p>
 
-        {/* TOMBOL ACTIONS (Edit Profile & Share) */}
+        {/* ACTIONS BUTTONS */}
         <div className="flex items-center gap-3 w-full h-10">
           <button
             onClick={() => setIsModalOpen(true)}
@@ -184,25 +188,38 @@ export default function MyProfilePage() {
           </button>
         </div>
 
-        {/* STATS COUNTER GRID BAR */}
-        <div className="flex items-center gap-6 w-full h-[50px] border-y border-[#181D27] py-2 mt-2">
+        {/* DYNAMIC STATS COUNTER BAR (Sesuai Data Figma) */}
+        <div className="flex items-center gap-4 w-full h-[50px] border-y border-[#181D27] py-2 mt-2">
           <div className="flex-1 flex flex-col items-center">
-            <span className="text-lg font-bold text-[#FDFDFD]">0</span>
-            <span className="text-xs text-[#A4A7AE]">Posts</span>
+            <span className="text-lg font-bold text-[#FDFDFD]">
+              {postCount}
+            </span>
+            <span className="text-xs text-[#A4A7AE]">Post</span>
           </div>
-          <div className="w-[1px] h-8 bg-[#181D27]" />
+          <div className="w-[1px] h-6 bg-[#181D27]" />
           <div className="flex-1 flex flex-col items-center">
-            <span className="text-lg font-bold text-[#FDFDFD]">0</span>
+            <span className="text-lg font-bold text-[#FDFDFD]">
+              {followersCount}
+            </span>
             <span className="text-xs text-[#A4A7AE]">Followers</span>
           </div>
-          <div className="w-[1px] h-8 bg-[#181D27]" />
+          <div className="w-[1px] h-6 bg-[#181D27]" />
           <div className="flex-1 flex flex-col items-center">
-            <span className="text-lg font-bold text-[#FDFDFD]">0</span>
+            <span className="text-lg font-bold text-[#FDFDFD]">
+              {followingCount}
+            </span>
             <span className="text-xs text-[#A4A7AE]">Following</span>
+          </div>
+          <div className="w-[1px] h-6 bg-[#181D27]" />
+          <div className="flex-1 flex flex-col items-center">
+            <span className="text-lg font-bold text-[#FDFDFD]">
+              {likesCount}
+            </span>
+            <span className="text-xs text-[#A4A7AE]">Likes</span>
           </div>
         </div>
 
-        {/* GALLERY CONTAINER & TABS CONTROL */}
+        {/* GALLERY NAVIGATION TABS */}
         <div className="w-full flex flex-col gap-4 mt-2">
           <div className="w-full h-12 flex border-b border-[#181D27]">
             <button
@@ -213,7 +230,7 @@ export default function MyProfilePage() {
                   : "border-transparent text-[#A4A7AE]"
               }`}
             >
-              <Grid size={20} /> Posts
+              <Grid size={20} /> Gallery
             </button>
             <button
               onClick={() => setActiveTab("saved")}
@@ -227,56 +244,103 @@ export default function MyProfilePage() {
             </button>
           </div>
 
-          {/* DUMMY IMAGES PLACEHOLDER (Mengikuti Pola Grid 3 Kolom Figma) */}
-          <div className="grid grid-cols-3 gap-1 w-full aspect-square">
-            {[...Array(9)].map((_, idx) => (
-              <div
-                key={idx}
-                className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm flex items-center justify-center text-xs text-zinc-700"
-              >
-                No content
+          {/* ============================================================
+              KONDISI KONTEN: DYNAMIC EMPTY STATE VS GRID IMAGES 
+              ============================================================ */}
+          {activeTab === "posts" ? (
+            userPosts.length === 0 ? (
+              /* KONDISI FIGMA 3: EMPTY POST STATE (Up Close & Personal) */
+              <div className="w-full flex flex-col items-center text-center px-4 py-12 gap-6 animate-fade-in">
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-base font-bold text-white tracking-tight">
+                    Your story starts here
+                  </h3>
+                  <p className="text-sm text-[#A4A7AE] leading-relaxed max-w-[280px]">
+                    Share your first post and let the world see your moments,
+                    passions, and memories. Make this space truly yours.
+                  </p>
+                </div>
+                <button
+                  onClick={() => toast.info("Redirecting to create post...")}
+                  className="w-full max-w-[280px] h-11 bg-[#6936F2] hover:bg-[#522BC8] text-[#FDFDFD] font-bold rounded-full text-sm transition-all duration-200 shadow-lg cursor-pointer flex items-center justify-center"
+                >
+                  Upload My First Post
+                </button>
               </div>
-            ))}
-          </div>
+            ) : (
+              /* KONDISI FIGMA 1: GRID GALLERY ADA ISI */
+              <div className="grid grid-cols-3 gap-1 w-full">
+                {userPosts.map((post: Post) => (
+                  <div
+                    key={post.id}
+                    className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden"
+                  >
+                    <img
+                      src={post.imageUrl || "/placeholder.png"}
+                      alt="Post"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )
+          ) : /* TAB SAVED */
+          savedPosts.length === 0 ? (
+            <div className="w-full text-center py-16 text-sm text-[#A4A7AE]">
+              No saved posts yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1 w-full">
+              {savedPosts.map((save: Post) => (
+                <div
+                  key={save.id}
+                  className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden"
+                >
+                  <img
+                    src={save.imageUrl}
+                    alt="Saved"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* FLOAT STICKY BOTTOM MENU (Bawaan Sketsa Figma) */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[345px] h-16 bg-[#0A0D12]/90 border border-[#181D27] backdrop-blur-[50px] rounded-full flex items-center justify-center gap-12 z-20 shadow-xl">
-        <button className="flex flex-col items-center gap-0.5 text-white">
+      {/* FIXED BOTTOM NAV MENU BAR */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[345px] h-16 bg-[#0A0D12]/90 border border-[#181D27] backdrop-blur-[50px] rounded-full flex items-center justify-center gap-4 px-6 z-20 shadow-xl">
+        <button className="flex-1 flex flex-col items-center gap-0.5 text-white">
           <Home size={20} />
           <span className="text-[10px] font-bold">Home</span>
         </button>
-        <button className="w-11 h-11 bg-[#6936F2] hover:bg-[#522BC8] rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer">
+        <button className="w-11 h-11 bg-[#6936F2] hover:bg-[#522BC8] rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer shrink-0">
           <Plus size={22} />
         </button>
-        <button className="flex flex-col items-center gap-0.5 text-[#7F51F9]">
+        <button className="flex-1 flex flex-col items-center gap-0.5 text-[#7F51F9]">
           <User size={20} />
-          <span className="text-[10px] font-medium">Profile</span>
+          <span className="text-[10px] font-bold">Profile</span>
         </button>
       </div>
 
       {/* ============================================================
-          MODAL DRAWER POPUP: EDIT BASIC PROFILE
+          MODAL DRAWER POPUP: EDIT BASIC PROFILE (Bebas 'any')
           ============================================================ */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col items-center gap-5 relative max-h-[90vh] overflow-y-auto shadow-2xl">
-            {/* Tombol Close Modal */}
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
             >
               <X size={20} />
             </button>
-
             <h3 className="text-lg font-bold text-white tracking-tight">
               Edit Profile
             </h3>
 
-            {/* Avatar Edit Area */}
             <div className="flex flex-col items-center gap-2">
-              <div className="w-20 h-20 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden flex items-center justify-center relative group">
+              <label className="relative group cursor-pointer w-20 h-20 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden flex items-center justify-center">
                 {previewUrl || user?.avatarUrl ? (
                   <img
                     src={previewUrl || user?.avatarUrl}
@@ -286,34 +350,32 @@ export default function MyProfilePage() {
                 ) : (
                   <User size={32} className="text-zinc-600" />
                 )}
-                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                   <Camera size={18} className="text-white" />
-                  <input
-                    type="file"
-                    accept="image/png, image/jpeg, image/jpg"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </label>
-              </div>
+                </div>
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
               <span className="text-xs text-zinc-400">
                 Tap avatar to change
               </span>
             </div>
 
-            {/* Form Input Edit */}
             <form
               onSubmit={handleSubmit(onSubmit)}
               className="w-full flex flex-col gap-4"
             >
-              {/* Field: Name */}
               <div className="flex flex-col gap-1 w-full">
                 <label className="text-xs font-bold text-white">Name</label>
                 <div className="w-full h-11 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                   <input
                     type="text"
                     {...register("name")}
-                    className="w-full bg-transparent text-white placeholder-zinc-700 text-sm focus:outline-none"
+                    className="w-full bg-transparent text-white text-sm focus:outline-none"
                   />
                 </div>
                 {errors.name && (
@@ -321,14 +383,13 @@ export default function MyProfilePage() {
                 )}
               </div>
 
-              {/* Field: Username */}
               <div className="flex flex-col gap-1 w-full">
                 <label className="text-xs font-bold text-white">Username</label>
                 <div className="w-full h-11 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                   <input
                     type="text"
                     {...register("username")}
-                    className="w-full bg-transparent text-white placeholder-zinc-700 text-sm focus:outline-none"
+                    className="w-full bg-transparent text-white text-sm focus:outline-none"
                   />
                 </div>
                 {errors.username && (
@@ -338,7 +399,6 @@ export default function MyProfilePage() {
                 )}
               </div>
 
-              {/* Field: Number Phone */}
               <div className="flex flex-col gap-1 w-full">
                 <label className="text-xs font-bold text-white">
                   Number Phone
@@ -347,7 +407,7 @@ export default function MyProfilePage() {
                   <input
                     type="text"
                     {...register("phone")}
-                    className="w-full bg-transparent text-white placeholder-zinc-700 text-sm focus:outline-none"
+                    className="w-full bg-transparent text-white text-sm focus:outline-none"
                   />
                 </div>
                 {errors.phone && (
@@ -355,7 +415,6 @@ export default function MyProfilePage() {
                 )}
               </div>
 
-              {/* Field: Bio Textarea */}
               <div className="flex flex-col gap-1 w-full">
                 <label className="text-xs font-bold text-white">Bio</label>
                 <div className="w-full bg-[#0A0D12] border border-[#181D27] rounded-xl p-3 flex">
@@ -363,7 +422,7 @@ export default function MyProfilePage() {
                     rows={3}
                     placeholder="Tell us about yourself..."
                     {...register("bio")}
-                    className="w-full bg-transparent text-white placeholder-zinc-600 text-sm focus:outline-none resize-none"
+                    className="w-full bg-transparent text-white text-sm focus:outline-none resize-none"
                   />
                 </div>
                 {errors.bio && (
@@ -371,7 +430,6 @@ export default function MyProfilePage() {
                 )}
               </div>
 
-              {/* Submit Update Button */}
               <button
                 type="submit"
                 disabled={mutation.isPending}
