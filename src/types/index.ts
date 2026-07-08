@@ -94,3 +94,16 @@ export interface SearchUsersResponse {
     };
   };
 }
+
+export interface UserProfileData {
+  id: number;
+  username: string;
+  name: string;
+  avatarUrl: string | null;
+  bio?: string;
+  postCount: number;
+  followersCount: number;
+  followingCount: number;
+  likesCount: number;
+  isFollowedByMe: boolean;
+}
