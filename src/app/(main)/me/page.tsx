@@ -44,13 +44,14 @@ export default function MyProfilePage() {
     queryFn: userService.getMe,
   });
 
-  const user = profileData?.data?.user || profileData?.user;
+  const user = profileData?.data?.profile; // || profileData?.user;
+  const stats = profileData?.data?.stats;
 
   // Ambil counter stats asli dari API. Jika belum ada dari backend, default ke 0
-  const postCount = user?.postsCount || 0;
-  const followersCount = user?.followersCount || 0;
-  const followingCount = user?.followingCount || 0;
-  const likesCount = user?.likesCount || 0;
+  const postCount = stats?.posts ?? 0;
+  const followersCount = stats?.followers ?? 0;
+  const followingCount = stats?.following ?? 0;
+  const likesCount = stats?.likes ?? 0;
 
   // Tempat menampung data array posts (Guna mengecek Gallery kosong atau tidak)
   const userPosts = user?.posts || [];
@@ -158,12 +159,6 @@ export default function MyProfilePage() {
           </div>
         </div>
 
-        {/* BIO TEXT */}
-        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
-          {user?.bio ||
-            "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!"}
-        </p>
-
         {/* ACTIONS BUTTONS */}
         <div className="flex items-center gap-3 w-full h-10">
           <button
@@ -188,6 +183,11 @@ export default function MyProfilePage() {
           </button>
         </div>
 
+        {/* BIO TEXT */}
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
+          {user?.bio ||
+            "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!"}
+        </p>
         {/* DYNAMIC STATS COUNTER BAR (Sesuai Data Figma) */}
         <div className="flex items-center gap-4 w-full h-[50px] border-y border-[#181D27] py-2 mt-2">
           <div className="flex-1 flex flex-col items-center">
@@ -354,6 +354,7 @@ export default function MyProfilePage() {
                   <Camera size={18} className="text-white" />
                 </div>
                 <input
+                  id="image-file"
                   type="file"
                   accept="image/png, image/jpeg, image/jpg"
                   onChange={handleFileChange}

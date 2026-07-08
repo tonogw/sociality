@@ -1,5 +1,6 @@
 import { axiosInstance } from "@/lib/api/axios";
 import { UpdateUserInput } from "@/lib/validations";
+import type { SearchedUser, SearchUsersResponse } from "@/types";
 
 export const userService = {
   getMe: async () => {
@@ -15,6 +16,17 @@ export const userService = {
         "Content-Type": "multipart/form-data",
       },
     });
+    return response.data;
+  },
+
+  searchUsers: async (
+    queryText: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<SearchUsersResponse> => {
+    const response = await axiosInstance.get(
+      `/users/search?q=encodeURIComponent(queryText)}&page=${page}&limit=${limit}`,
+    );
     return response.data;
   },
 };

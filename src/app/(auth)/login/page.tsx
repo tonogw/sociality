@@ -100,6 +100,7 @@ export default function LoginPage() {
               Email
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                 <input
+                  id="current-email"
                   type="email"
                   placeholder="Enter your email"
                   {...register("email")}
@@ -121,6 +122,7 @@ export default function LoginPage() {
               Password
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center justify-between">
                 <input
+                  id="current-password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   {...register("password")}

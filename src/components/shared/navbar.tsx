@@ -6,7 +6,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Menu, X, ArrowLeft, LogOut } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+// import Image from "next/image";
+import SearchBar from "./searchBar";
 
 import { RootState, logout } from "@/store";
 import { userService } from "@/services/userService";
@@ -33,7 +34,7 @@ export default function Navbar() {
     enabled: isLoggedIn,
   });
 
-  const user = profileData?.data?.user || profileData?.user;
+  const user = profileData?.data?.profile; // || profileData?.user;
 
   // Handler Aksi Logout
   const handleLogout = () => {
@@ -49,20 +50,21 @@ export default function Navbar() {
     return (
       <nav className="w-full h-16 bg-black border-b border-[#181D27] flex items-center px-4 gap-4 transition-all duration-200">
         <div className="flex-1 max-w-[321px] h-10 bg-[#0A0D12] border border-[#181D27] rounded-full px-3 flex items-center gap-1.5">
-          <Search size={20} className="text-[#717680]" />
-          <input
+          <SearchBar placeholder="Search " />
+          {/* <Search size={20} className="text-[#717680]" /> */}
+          {/* <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search users or posts..."
             className="flex-1 bg-transparent text-[#FDFDFD] placeholder-[#535862] text-sm focus:outline-none"
             autoFocus
-          />
-          {searchQuery && (
+          /> */}
+          {/* {searchQuery && (
             <button onClick={() => setSearchQuery("")}>
               <X size={16} className="text-[#535862] hover:text-white" />
             </button>
-          )}
+          )} */}
         </div>
         <button
           onClick={() => setIsSearchActive(false)}
@@ -107,7 +109,7 @@ export default function Navbar() {
             title="Click to logout"
           >
             {user.avatarUrl ? (
-              <Image
+              <img
                 src={user.avatarUrl}
                 alt="Profile"
                 className="w-full h-full object-cover"
@@ -194,7 +196,7 @@ export default function Navbar() {
             className="w-10 h-10 rounded-full bg-zinc-800 border border-[#181D27] overflow-hidden flex items-center justify-center"
           >
             {user.avatarUrl ? (
-              <Image
+              <img
                 src={user.avatarUrl}
                 alt="Avatar"
                 className="w-full h-full object-cover"

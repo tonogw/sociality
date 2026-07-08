@@ -72,3 +72,25 @@ export interface GetMyPostData {
     };
   };
 }
+
+export interface SearchedUser {
+  id: number;
+  username: string;
+  name: string;
+  avatarUrl: string | null;
+  isFollowedByMe: boolean;
+}
+
+export interface SearchUsersResponse {
+  success: boolean;
+  message: string;
+  data: {
+    users: SearchedUser[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+}
