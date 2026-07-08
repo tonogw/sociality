@@ -1,19 +1,20 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import Image from "next/image"; // 1. Impor komponen Image Next.js
+import Image from "next/image";
 import type { SearchedUser } from "@/types";
 
-export default function UserSearchPage() {
+// 1. Export function moved to suspense boundary
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const query = searchParams.get("q") || "";
   const initialPageFromUrl = Number(searchParams.get("page")) || 1;
 
-  // Ambil BASE URL dari .env
+  // Membaca Base URL dari .env secara clean
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [usersList, setUsersList] = useState<SearchedUser[]>([]);
@@ -29,7 +30,7 @@ export default function UserSearchPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const previousScrollHeightRef = useRef<number>(0);
 
-  // EFFECT 1: Initial Fetch
+  // Initial Fetch
   useEffect(() => {
     let isMounted = true;
 
@@ -48,7 +49,6 @@ export default function UserSearchPage() {
       setError(null);
 
       try {
-        // CLEAN: Menggunakan variabel lingkungan .env
         const url = `${baseUrl}/users/search?q=${encodeURIComponent(query)}&page=${initialPageFromUrl}&limit=20`;
         const res = await fetch(url, {
           method: "GET",
@@ -82,7 +82,7 @@ export default function UserSearchPage() {
     };
   }, [query, initialPageFromUrl, baseUrl]);
 
-  // EFFECT 2: Scroll Up (Prev Page)
+  // Scroll Up (Prev Page)
   useEffect(() => {
     const handleScroll = async () => {
       if (
@@ -118,7 +118,7 @@ export default function UserSearchPage() {
 
           setTopPage(prevPageTarget);
         } catch (err) {
-          console.error("Gagal memuat halaman sebelumnya:", err);
+          console.error(err);
         } finally {
           setLoadingPrev(false);
         }
@@ -129,7 +129,7 @@ export default function UserSearchPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [topPage, loadingPrev, query, baseUrl]);
 
-  // EFFECT 3: Scroll Anchoring Fix
+  // Scroll Anchoring Fix
   useEffect(() => {
     if (previousScrollHeightRef.current && containerRef.current) {
       const currentScrollHeight = document.documentElement.scrollHeight;
@@ -178,7 +178,7 @@ export default function UserSearchPage() {
       ref={containerRef}
       className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-24 font-sans flex flex-col items-center"
     >
-      <div className="w-full max-w-[361px] flex flex-col gap-4">
+      <div className="w-full max-w-90.25 flex flex-col gap-4">
         {loadingPrev && (
           <div className="w-full py-2 flex items-center justify-center gap-2">
             <Loader2 className="animate-spin text-[#6936F2]" size={16} />
@@ -215,20 +215,17 @@ export default function UserSearchPage() {
                 }
                 className="w-full h-14 flex items-center gap-3 border-b border-zinc-950/50 pb-2 cursor-pointer p-1 rounded-xl transition-all hover:bg-zinc-900/40"
               >
-                {/* CONTAINER AVATAR */}
-                <div className="w-12 h-12 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden flex items-center justify-center shrink-0 position relative">
+                <div className="w-12 h-12 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden flex items-center justify-center shrink-0 relative">
                   {user.avatarUrl ? (
-                    // OPTIMASI: Menggunakan <Image /> Next.js dengan properti penentu ukuran hemat
                     <Image
                       src={user.avatarUrl}
                       alt={user.name}
                       width={48}
                       height={48}
                       className="w-full h-full object-cover"
-                      unoptimized={false} // Biarkan Next.js melakukan kompresi otomatis
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-sm font-bold text-white">
+                    <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-sm font-bold text-white">
                       {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                     </div>
                   )}
@@ -252,17 +249,9 @@ export default function UserSearchPage() {
                   disabled={loadingMore}
                   className="w-full h-10 border border-[#181D27] rounded-full text-xs font-semibold text-[#FDFDFD] bg-[#0A0D12] hover:bg-zinc-950 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {loadingMore ? (
-                    <>
-                      <Loader2
-                        className="animate-spin text-[#6936F2]"
-                        size={16}
-                      />
-                      Loading more...
-                    </>
-                  ) : (
-                    `Load More (Page ${bottomPage} of ${totalPages})`
-                  )}
+                  {loadingMore
+                    ? "Loading more..."
+                    : `Load More (Page ${bottomPage} of ${totalPages})`}
                 </button>
               </div>
             )}
@@ -270,5 +259,20 @@ export default function UserSearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// 2. EXPORT DEFAULT MUST WRAPPED WITH SUSPENSE BOUNDARY
+export default function UserSearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-screen bg-black flex items-center justify-center">
+          <Loader2 className="animate-spin text-[#6936F2]" size={32} />
+        </div>
+      }
+    >
+      <SearchContent />
+    </Suspense>
   );
 }
