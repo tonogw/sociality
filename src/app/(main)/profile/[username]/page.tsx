@@ -1,24 +1,25 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { ArrowLeft, Loader2, Send, Grid, Heart } from "lucide-react";
+import { Loader2, Send, Grid, Heart } from "lucide-react";
 import Image from "next/image";
-import { UserProfileData } from "@/types";
+import type { UserProfileData } from "@/types";
 
 function ProfileContent() {
   const params = useParams();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  //   const router = useRouter();
+  //   const searchParams = useSearchParams();
 
   const username = params?.username as string;
-  const fromQuery = searchParams.get("fromQ") || "";
-  const lastPage = searchParams.get("lastPage") || "1";
+  //   const fromQuery = searchParams.get("fromQ") || "";
+  //   const lastPage = searchParams.get("lastPage") || "1";
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"gallery" | "liked">("gallery");
 
   // Fetch profile public data from backend server
@@ -28,9 +29,13 @@ function ProfileContent() {
     const fetchUserProfile = async () => {
       try {
         // Menggunakan rute dinamis backend yang sesuai
+        const token = localStorage.getItem("token") || "";
         const res = await fetch(`${baseUrl}/users/${username}`, {
           method: "GET",
-          headers: { accept: "application/json" },
+          headers: {
+            accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (!res.ok) throw new Error("Profile not found");
@@ -75,6 +80,73 @@ function ProfileContent() {
   //     }
   //   };
 
+  const handleFollowAction = async () => {
+    if (!profile || !baseUrl || followLoading) return;
+
+    setFollowLoading(true);
+    try {
+      const token = localStorage.getItem("token") || "";
+      // Fetch api follow
+      const res = await fetch(`${baseUrl}/follow/${username}`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: "", // as params -d '' at CURL
+      });
+
+      if (!res.ok) throw new Error("Failed change to follow status");
+      const json = await res.json();
+
+      if (json?.success) {
+        // get following new status from backend server
+        const isNowFollowing = json?.data?.following;
+
+        setProfile((prev) => {
+          if (!prev) return null;
+
+          const currentFollowers = Number(
+            prev.counts.followers ??
+              //   prev.followers ??
+              //   prev._count?.followers ??
+              0,
+          );
+
+          return {
+            ...prev,
+            isFollowedByMe: isNowFollowing,
+            // Update total follow
+            followersCount: isNowFollowing
+              ? currentFollowers + 1
+              : Math.max(0, currentFollowers - 1),
+            //   ? prev.followersCount + 1
+            //   : prev.followersCount - 1,
+          };
+        });
+      }
+    } catch (err) {
+      console.error("Follow error:", err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  //   ArrowLeft button
+  //   const handleBackNavigation = () => {
+  //     if (fromQuery) {
+  //       router.push(
+  //         `/users/search?q=${encodeURIComponent(fromQuery)}&page=${lastPage}&limit=20`,
+  //       );
+  //     } else {
+  //       router.push("/");
+  //     }
+  //   };
+
+  const handleImageUploadAction = () => {
+    alert(`Open gallery to post new timeline to your profile @${username}`);
+  };
+
   if (loading) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center gap-2 text-white">
@@ -83,6 +155,11 @@ function ProfileContent() {
       </div>
     );
   }
+
+  //   const renderName = profile?.name || username;
+  //   const renderBio = profile?.bio || "No description template provided";
+  //   const renderPost = profile?.counts.post ?? 0;
+  //   const render
 
   return (
     <div className="w-full min-h-screen bg-black text-white px-4 pt-6 pb-24 flex flex-col items-center font-sans">
@@ -113,7 +190,7 @@ function ProfileContent() {
                   alt={profile.name}
                   width={64}
                   height={64}
-                  className="w-full h-full object-cover"
+                  className="w-14 h-14 object-cover"
                 />
               ) : (
                 <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-lg font-bold text-white">
@@ -137,13 +214,21 @@ function ProfileContent() {
         {/* ACTIONS CONTAINER (BUTTON ACTION & SHARE) */}
         <div className="flex items-center gap-3 w-full h-10 mt-1">
           <button
+            onClick={handleFollowAction}
+            disabled={followLoading}
             className={`flex-1 h-full rounded-full text-sm font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer ${
               profile?.isFollowedByMe
                 ? "bg-[#181D27] border border-zinc-800"
                 : "bg-[#6936F2] hover:bg-[#582cd1]"
             }`}
           >
-            {profile?.isFollowedByMe ? "Following" : "Follow"}
+            {followLoading ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : profile?.counts.following ? (
+              "Following"
+            ) : (
+              "Follow"
+            )}
           </button>
 
           {/* SHARE BUTTON ROUNDED ACCORDING TO FIGMA STYLE */}
@@ -164,7 +249,7 @@ function ProfileContent() {
         <div className="flex items-center justify-between w-full bg-[#0A0D12]/30 border border-[#181D27]/50 rounded-2xl py-3 px-2 text-center mt-2">
           <div className="flex-1">
             <p className="text-base font-bold text-[#FDFDFD]">
-              {profile?.postCount}
+              {profile?.counts.post}
             </p>
             <p className="text-[10px] text-[#A4A7AE] uppercase tracking-wider mt-0.5">
               Post
@@ -173,7 +258,7 @@ function ProfileContent() {
           <div className="w-[1px] h-6 bg-[#181D27]" />
           <div className="flex-1">
             <p className="text-base font-bold text-[#FDFDFD]">
-              {profile?.followersCount}
+              {profile?.counts.followers}
             </p>
             <p className="text-[10px] text-[#A4A7AE] uppercase tracking-wider mt-0.5">
               Followers
@@ -182,7 +267,7 @@ function ProfileContent() {
           <div className="w-[1px] h-6 bg-[#181D27]" />
           <div className="flex-1">
             <p className="text-base font-bold text-[#FDFDFD]">
-              {profile?.followingCount}
+              {profile?.counts.following}
             </p>
             <p className="text-[10px] text-[#A4A7AE] uppercase tracking-wider mt-0.5">
               Following
@@ -191,7 +276,7 @@ function ProfileContent() {
           <div className="w-[1px] h-6 bg-[#181D27]" />
           <div className="flex-1">
             <p className="text-base font-bold text-[#FDFDFD]">
-              {profile?.likesCount}
+              {profile?.counts.likes}
             </p>
             <p className="text-[10px] text-[#A4A7AE] uppercase tracking-wider mt-0.5">
               Likes

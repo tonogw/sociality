@@ -101,6 +101,16 @@ export interface UserProfileData {
   name: string;
   avatarUrl: string | null;
   bio?: string;
+  email: string;
+  phone: string;
+  counts: {
+    post: number;
+    followers: number;
+    following: number;
+    likes: number;
+  };
+  isfollowing: boolean;
+  isMe: boolean;
   postCount: number;
   followersCount: number;
   followingCount: number;
