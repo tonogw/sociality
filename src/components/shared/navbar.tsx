@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image"; // Migrasi aman komponen gambar Next.js
-import SearchBar from "./searchBar";
+import SearchBar from "./SearchBar";
 
 // Integrasi Shadcn / UI Sheet Components bawaan folder src/components/ui/sheet.tsx Bapak
 import {
@@ -28,7 +28,7 @@ import {
 
 import { RootState, logout } from "@/store";
 import { userService } from "@/services/userService";
-import Logo from "@/components/shared/logo";
+import Logo from "@/components/shared/Logo";
 
 export default function Navbar() {
   const router = useRouter();

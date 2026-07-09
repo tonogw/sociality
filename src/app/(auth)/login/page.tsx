@@ -13,7 +13,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { loginSchema, type LoginInputs } from "@/lib/validations/index";
 import { authService } from "@/services/authService";
 import { setToken } from "@/store";
-import Logo from "@/components/shared/logo";
+import Logo from "@/components/shared/Logo";
 import { AuthResponse } from "@/types/auth";
 // import { AxiosResponse } from "axios";
 
@@ -70,11 +70,11 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen w-full bg-black text-white flex flex-col items-center justify-center font-sans overflow-hidden px-4">
       {/* Mesh Gradients Background (Konsisten dengan Figma) */}
-      <div className="absolute -bottom-[242px] -left-[86px] right-[-113px] h-[531px] bg-gradient-to-r from-[#5613A3] to-[#522BC8] blur-[32px] opacity-60 pointer-events-none" />
-      <div className="absolute -bottom-[140px] -left-[96px] right-[72px] h-[493px] bg-gradient-to-r from-[#AC88FF] to-[#AD3AE7] blur-[32px] rotate-[45.32deg] opacity-40 pointer-events-none" />
+      <div className="absolute -bottom-60.5 -left-21.5 right-28.25 h-132.75 bg-linear-to-r from-[#5613A3] to-[#522BC8] blur-[32px] opacity-60 pointer-events-none" />
+      <div className="absolute -bottom-35 -left-24 right-18 h-123.25 bg-linear-to-r from-[#AC88FF] to-[#AD3AE7] blur-[32px] rotate-[45.32deg] opacity-40 pointer-events-none" />
 
       {/* Main Glassmorphic Container Card (Height: 450px sesuai Figma) */}
-      <div className="z-10 w-full max-w-[345px] min-h-[450px] bg-black/20 border border-[#181D27] backdrop-blur-[20px] rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl">
+      <div className="z-10 w-full max-w-86.25 min-h-112.5 bg-black/20 border border-[#181D27] backdrop-blur-[20px] rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl">
         {/* Reusable Shared Logo */}
         <Logo />
 

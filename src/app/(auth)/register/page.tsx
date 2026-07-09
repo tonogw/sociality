@@ -9,12 +9,13 @@ import Link from "next/link";
 import { AxiosError } from "axios";
 import { useDispatch } from "react-redux";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import Logo from "@/components/shared/logo";
 import { registerSchema, type RegisterUser } from "@/lib/validations/index";
 import { authService } from "@/services/authService";
 import { setToken } from "@/store"; // Pastikan path ekspor store disesuaikan
 // import { AxiosResponse } from "axios";
 import { AuthResponse } from "@/types/auth";
+// import Logo from "@/components/shared/Logo.svg";
+import Image from "next/image";
 
 interface ApiErrorResponse {
   message?: string;
@@ -71,17 +72,24 @@ export default function RegisterPage() {
   return (
     <div className="relative min-h-screen w-full bg-black text-white flex flex-col items-center justify-center font-sans overflow-hidden px-4">
       {/* Mesh Gradients Background (Sesuai Spesifikasi Figma) */}
-      <div className="absolute -bottom-[242px] -left-[86px] right-[-113px] h-[531px] bg-gradient-to-r from-[#5613A3] to-[#522BC8] blur-[32px] opacity-60 pointer-events-none" />
-      <div className="absolute -bottom-[140px] -left-[96px] right-[72px] h-[493px] bg-gradient-to-r from-[#AC88FF] to-[#AD3AE7] blur-[32px] rotate-[45.32deg] opacity-40 pointer-events-none" />
+      <div className="absolute -bottom-60.5 -left-21.5 right-28.25 h-132.75 bg-linear-to-r from-[#5613A3] to-[#522BC8] blur-[32px] opacity-60 pointer-events-none" />
+      <div className="absolute -bottom-35 -left-24 right-18 h-123.25 bg-linear-to-r from-[#AC88FF] to-[#AD3AE7] blur-[32px] rotate-[45.32deg] opacity-40 pointer-events-none" />
 
       {/* Main Glassmorphic Container Card */}
-      <div className="z-10 w-full max-w-[345px] bg-black/20 border border-[#181D27] backdrop-blur-[50px] rounded-2xl p-8 flex flex-col items-center gap-6 shadow-2xl">
+      <div className="z-10 w-full max-w-86.25 bg-black/20 border border-[#181D27] backdrop-blur-[50px] rounded-2xl p-8 flex flex-col items-center gap-6 shadow-2xl">
         {/* Header / Logo */}
-        <div className="flex items-center gap-[11px]">
+        <div className="flex items-center gap-2.75">
           {/* Logo Sederhana Representasi SVG Figma */}
-          <div className="w-[30px] h-[30px] flex items-center justify-center bg-white rounded-full">
+          <div className="w-7.5 h-7.5 flex items-center justify-center bg-white rounded-full">
             {/* <div className="w-4 h-4 bg-black rounded-xs" /> */}
-            <Logo />
+            {/* <Logo /> */}
+            <Image
+              src="/icons/Logo.svg"
+              alt="logo"
+              sizes="54px"
+              fill
+              className="w-14 h-14 object-contain"
+            />
           </div>
           <span className="text-2xl font-bold text-[#FDFDFD] tracking-tight">
             Sociality

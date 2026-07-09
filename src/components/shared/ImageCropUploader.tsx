@@ -143,7 +143,7 @@ export default function ImageCropUploader({
 
   return (
     <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-5 flex flex-col gap-4 relative shadow-2xl">
+      <div className="w-full max-w-95 bg-black border border-[#181D27] rounded-2xl p-5 flex flex-col gap-4 relative shadow-2xl">
         <button
           onClick={() => {
             setImageSrc(null);

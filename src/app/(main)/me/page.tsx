@@ -20,7 +20,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { updateProfileSchema, type UpdateUserInput } from "@/lib/validations";
 import { userService } from "@/services/userService";
-import ImageCropUploader from "@/components/shared/image-crop-uploader";
+import ImageCropUploader from "@/components/shared/ImageCropUploader";
 
 interface ApiErrorResponse {
   message?: string;

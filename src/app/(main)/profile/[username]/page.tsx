@@ -163,7 +163,7 @@ function ProfileContent() {
 
   return (
     <div className="w-full min-h-screen bg-black text-white px-4 pt-6 pb-24 flex flex-col items-center font-sans">
-      <div className="w-full max-w-[361px] flex flex-col gap-4">
+      <div className="w-full max-w-90.25 flex flex-col gap-4">
         {/* HEADER NAVIGATION (BARIS ATAS FIGMA) */}
         <div className="flex items-center justify-between w-full border-b border-[#181D27] pb-3">
           {/* <div className="flex items-center gap-3">
@@ -235,7 +235,7 @@ function ProfileContent() {
           <button className="w-10 h-10 border border-[#181D27] rounded-full flex items-center justify-center text-white hover:bg-zinc-900 transition-colors cursor-pointer">
             <Send
               size={18}
-              className="transform rotate-[-20deg] translate-x-[-1px]"
+              className="transform rotate-[-20deg] -translate-x-px"
             />
           </button>
         </div>
@@ -255,7 +255,7 @@ function ProfileContent() {
               Post
             </p>
           </div>
-          <div className="w-[1px] h-6 bg-[#181D27]" />
+          <div className="w-px h-6 bg-[#181D27]" />
           <div className="flex-1">
             <p className="text-base font-bold text-[#FDFDFD]">
               {profile?.counts.followers}
@@ -264,7 +264,7 @@ function ProfileContent() {
               Followers
             </p>
           </div>
-          <div className="w-[1px] h-6 bg-[#181D27]" />
+          <div className="w-px h-6 bg-[#181D27]" />
           <div className="flex-1">
             <p className="text-base font-bold text-[#FDFDFD]">
               {profile?.counts.following}
@@ -273,7 +273,7 @@ function ProfileContent() {
               Following
             </p>
           </div>
-          <div className="w-[1px] h-6 bg-[#181D27]" />
+          <div className="w-px h-6 bg-[#181D27]" />
           <div className="flex-1">
             <p className="text-base font-bold text-[#FDFDFD]">
               {profile?.counts.likes}
