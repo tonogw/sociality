@@ -1,5 +1,5 @@
 import api from "axios";
-import type { AuthResponse, UserData } from "@/types/auth";
+import type { AuthResponse } from "@/types/auth";
 
 export const authApi = {
   register: async (data: {

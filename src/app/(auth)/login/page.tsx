@@ -15,7 +15,7 @@ import { authService } from "@/services/authService";
 import { setToken } from "@/store";
 import Logo from "@/components/shared/logo";
 import { AuthResponse } from "@/types/auth";
-import { AxiosResponse } from "axios";
+// import { AxiosResponse } from "axios";
 
 interface ApiErrorResponse {
   message?: string;

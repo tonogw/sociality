@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { Loader2, Send, Grid, Heart } from "lucide-react";
 import Image from "next/image";
@@ -143,9 +143,9 @@ function ProfileContent() {
   //     }
   //   };
 
-  const handleImageUploadAction = () => {
-    alert(`Open gallery to post new timeline to your profile @${username}`);
-  };
+  //   const handleImageUploadAction = () => {
+  //     alert(`Open gallery to post new timeline to your profile @${username}`);
+  //   };
 
   if (loading) {
     return (

@@ -6,15 +6,20 @@ import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import type { SearchedUser } from "@/types";
 
-// 1. Export function moved to suspense boundary
+// interface SearchedUser {
+//   id: number;
+//   username: string;
+//   name: string;
+//   avatarUrl: string | null;
+//   isFollowedByMe: boolean;
+// }
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const query = searchParams.get("q") || "";
   const initialPageFromUrl = Number(searchParams.get("page")) || 1;
-
-  // Membaca Base URL dari .env secara clean
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [usersList, setUsersList] = useState<SearchedUser[]>([]);
@@ -30,7 +35,6 @@ function SearchContent() {
   const containerRef = useRef<HTMLDivElement>(null);
   const previousScrollHeightRef = useRef<number>(0);
 
-  // Initial Fetch
   useEffect(() => {
     let isMounted = true;
 
@@ -82,7 +86,6 @@ function SearchContent() {
     };
   }, [query, initialPageFromUrl, baseUrl]);
 
-  // Scroll Up (Prev Page)
   useEffect(() => {
     const handleScroll = async () => {
       if (
@@ -129,7 +132,6 @@ function SearchContent() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [topPage, loadingPrev, query, baseUrl]);
 
-  // Scroll Anchoring Fix
   useEffect(() => {
     if (previousScrollHeightRef.current && containerRef.current) {
       const currentScrollHeight = document.documentElement.scrollHeight;
@@ -140,7 +142,6 @@ function SearchContent() {
     }
   }, [usersList]);
 
-  // Load More (Next Page)
   const handleLoadMore = async () => {
     if (loadingMore || bottomPage >= totalPages || !query || !baseUrl) return;
 
@@ -178,7 +179,7 @@ function SearchContent() {
       ref={containerRef}
       className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-24 font-sans flex flex-col items-center"
     >
-      <div className="w-full max-w-90.25 flex flex-col gap-4">
+      <div className="w-full max-w-[361px] flex flex-col gap-4">
         {loadingPrev && (
           <div className="w-full py-2 flex items-center justify-center gap-2">
             <Loader2 className="animate-spin text-[#6936F2]" size={16} />
@@ -220,12 +221,13 @@ function SearchContent() {
                     <Image
                       src={user.avatarUrl}
                       alt={user.name}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                      unoptimized
                     />
                   ) : (
-                    <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-sm font-bold text-white">
+                    <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-sm font-bold text-white">
                       {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                     </div>
                   )}
@@ -262,7 +264,6 @@ function SearchContent() {
   );
 }
 
-// 2. EXPORT DEFAULT MUST WRAPPED WITH SUSPENSE BOUNDARY
 export default function UserSearchPage() {
   return (
     <Suspense

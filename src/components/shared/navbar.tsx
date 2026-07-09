@@ -12,7 +12,6 @@ import {
   LogOut,
   User,
   Settings,
-  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image"; // Migrasi aman komponen gambar Next.js

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,7 +13,6 @@ import {
   Home,
   Plus,
   User,
-  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
@@ -21,6 +20,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { updateProfileSchema, type UpdateUserInput } from "@/lib/validations";
 import { userService } from "@/services/userService";
+import ImageCropUploader from "@/components/shared/image-crop-uploader";
 
 interface ApiErrorResponse {
   message?: string;
@@ -33,33 +33,38 @@ interface Post {
   createdAt: string;
 }
 
+// 🟢 PERBAIKAN: Deklarasi interface lokal yang kokoh untuk membebaskan halaman dari jebakan error 'any'
+interface ProfileStateData {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
+  phone: string;
+  bio: string | null;
+  avatarUrl: string | null;
+  posts?: Post[];
+  saved?: Post[];
+}
+
 export default function MyProfilePage() {
   const queryClient = useQueryClient();
   const router = useRouter();
-
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // State Baru Pengendali Modal Popup Create Post
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [postFile, setPostFile] = useState<File | null>(null);
-  const [postPreviewUrl, setPostPreviewUrl] = useState<string | null>(null);
-  const [captionText, setCaptionText] = useState("");
-  const postFileInputRef = useRef<HTMLInputElement>(null);
 
-  // State Profile Image Edit
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // 1. Ambil Data Profil Pengguna
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["user-profile"],
     queryFn: userService.getMe,
   });
 
-  const user = profileData?.data?.profile;
+  // Terapkan pengetikan tipe data eksplisit non-any
+  const user = profileData?.data?.profile as ProfileStateData | undefined;
   const stats = profileData?.data?.stats;
 
   const postCount = stats?.posts ?? 0;
@@ -92,7 +97,6 @@ export default function MyProfilePage() {
     }
   }, [user, reset]);
 
-  // Mutation Edit Profil
   const mutation = useMutation({
     mutationFn: userService.updateMe,
     onSuccess: () => {
@@ -115,72 +119,12 @@ export default function MyProfilePage() {
     },
   });
 
-  // MUTATION BARU: Eksekusi Kirim Gambar Feed ke Endpoint Backend /api/posts
-  const createPostMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${baseUrl}/posts`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Gagal mempublikasikan postingan.");
-      return res.json();
-    },
-    onSuccess: () => {
-      // Refresh cache otomatis agar gambar langsung nangkring di baris Gallery Grid
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      toast.success("Post published successfully!", {
-        style: {
-          background: "#079455",
-          color: "#FFFFFF",
-          borderRadius: "8px",
-          border: "none",
-        },
-      });
-      // Bersihkan form
-      setIsCreatePostOpen(false);
-      setPostFile(null);
-      setPostPreviewUrl(null);
-      setCaptionText("");
-    },
-    onError: (err: any) => {
-      toast.error(err.message || "Gagal mengunggah postingan baru.");
-    },
-  });
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
-  };
-
-  // Handler menangkap seleksi berkas foto timeline baru
-  const handlePostFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPostFile(file);
-      setPostPreviewUrl(URL.createObjectURL(file));
-    }
-  };
-
-  // Handler kirim form Create Post
-  const handlePublishPost = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!postFile) {
-      toast.error("Silakan pilih gambar terlebih dahulu.");
-      return;
-    }
-    const formData = new FormData();
-    formData.append("image", postFile);
-    formData.append(
-      "caption",
-      captionText || "Moments shared from my gallery 📸",
-    );
-
-    createPostMutation.mutate(formData);
   };
 
   const onSubmit = (data: UpdateUserInput) => {
@@ -207,15 +151,6 @@ export default function MyProfilePage() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      {/* INPUT FILE TERSEMBUNYI KHUSUS UNTUK UPLOAD POST */}
-      <input
-        type="file"
-        ref={postFileInputRef}
-        onChange={handlePostFileChange}
-        accept="image/*"
-        className="hidden"
-      />
-
       <div className="w-full max-w-[361px] flex flex-col gap-4">
         {/* INFO USER */}
         <div className="flex items-center gap-3">
@@ -330,10 +265,8 @@ export default function MyProfilePage() {
             </button>
           </div>
 
-          {/* GALLERY CONTENT SEGMENT */}
           {activeTab === "posts" ? (
             userPosts.length === 0 ? (
-              /* EMPTY POST STATE -> SEKARANG MEMICU MODAL POPUP CREATE */
               <div className="w-full flex flex-col items-center text-center px-4 py-12 gap-6 animate-fade-in">
                 <div className="flex flex-col gap-2">
                   <h3 className="text-base font-bold text-white tracking-tight">
@@ -352,7 +285,6 @@ export default function MyProfilePage() {
                 </button>
               </div>
             ) : (
-              /* GRID GALLERY AKTIF */
               <div className="grid grid-cols-3 gap-1 w-full animate-fade-in">
                 {userPosts.map((post: Post) => (
                   <div
@@ -397,7 +329,7 @@ export default function MyProfilePage() {
         </div>
       </div>
 
-      {/* FIXED BOTTOM NAV MENU BAR (Figma Connected) */}
+      {/* FIXED BOTTOM NAV MENU BAR */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[345px] h-16 bg-[#0A0D12]/90 border border-[#181D27] backdrop-blur-[50px] rounded-full flex items-center justify-center gap-4 px-6 z-20 shadow-xl">
         <button
           onClick={() => router.push("/")}
@@ -406,7 +338,6 @@ export default function MyProfilePage() {
           <Home size={20} />
           <span className="text-[10px] font-bold">Home</span>
         </button>
-        {/* Tombol + besar di tengah sekarang memicu popup modal buat postingan */}
         <button
           onClick={() => setIsCreatePostOpen(true)}
           className="w-11 h-11 bg-[#6936F2] hover:bg-[#522BC8] rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer shrink-0 transition-transform active:scale-95"
@@ -419,91 +350,18 @@ export default function MyProfilePage() {
         </button>
       </div>
 
-      {/* ============================================================
-          MODAL DRAWER POPUP BARU: CREATE TIMELINE TIMELINE POST
-          ============================================================ */}
-      {isCreatePostOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col gap-4 relative shadow-2xl">
-            <button
-              onClick={() => {
-                setIsCreatePostOpen(false);
-                setPostPreviewUrl(null);
-              }}
-              className="absolute top-4 right-4 text-zinc-500 hover:text-white"
-            >
-              <X size={20} />
-            </button>
-            <h3 className="text-base font-bold text-white tracking-tight text-center">
-              Create New Post
-            </h3>
+      {/* INTEGRASI MURNI IMAGE CROPPER MODULAR */}
+      <ImageCropUploader
+        isOpen={isCreatePostOpen}
+        onClose={() => setIsCreatePostOpen(false)}
+        baseUrl={baseUrl || ""}
+        onUploadSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+          setIsCreatePostOpen(false);
+        }}
+      />
 
-            <form
-              onSubmit={handlePublishPost}
-              className="flex flex-col gap-4 w-full"
-            >
-              {/* AREA UNGGAL MEDIA */}
-              <div
-                onClick={() => postFileInputRef.current?.click()}
-                className="w-full aspect-square bg-[#0A0D12] border border-dashed border-[#181D27] rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden group"
-              >
-                {postPreviewUrl ? (
-                  <Image
-                    src={postPreviewUrl}
-                    alt="Preview Post"
-                    fill
-                    className="object-cover"
-                    unoptimized
-                    sizes="361px"
-                  />
-                ) : (
-                  <>
-                    <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-500 border border-zinc-800 group-hover:text-white transition-colors">
-                      <Camera size={18} />
-                    </div>
-                    <span className="text-xs text-zinc-400 font-medium">
-                      Select Image from Mac
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* INPUT CAPTION TEKS */}
-              <div className="flex flex-col gap-1 w-full">
-                <label className="text-xs font-bold text-zinc-400">
-                  Caption
-                </label>
-                <div className="w-full bg-[#0A0D12] border border-[#181D27] rounded-xl p-3 flex">
-                  <textarea
-                    rows={2}
-                    value={captionText}
-                    onChange={(e) => setCaptionText(e.target.value)}
-                    placeholder="Write a caption for your first moment..."
-                    className="w-full bg-transparent text-white text-sm focus:outline-none resize-none placeholder-zinc-600"
-                  />
-                </div>
-              </div>
-
-              {/* ACTION EXECUTE BUTTON */}
-              <button
-                type="submit"
-                disabled={createPostMutation.isPending || !postFile}
-                className="w-full h-11 bg-[#6936F2] hover:bg-[#522BC8] disabled:bg-zinc-900 disabled:text-zinc-600 font-bold rounded-full text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
-              >
-                {createPostMutation.isPending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  "Publish Post 🚀"
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================
-          MODAL DRAWER POPUP: EDIT BASIC PROFILE
-          ============================================================ */}
+      {/* MODAL EDIT BASIC PROFILE (🟢 PERBAIKAN: Ganti tag img lama dengan tag Image Next.js valid) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col items-center gap-5 relative max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -520,10 +378,13 @@ export default function MyProfilePage() {
             <div className="flex flex-col items-center gap-2">
               <label className="relative group cursor-pointer w-20 h-20 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden flex items-center justify-center">
                 {previewUrl || user?.avatarUrl ? (
-                  <img
-                    src={previewUrl || user?.avatarUrl}
+                  <Image
+                    src={previewUrl || user?.avatarUrl || "/placeholder.png"}
                     alt="Avatar Preview"
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                    sizes="80px"
                   />
                 ) : (
                   <User size={32} className="text-zinc-600" />

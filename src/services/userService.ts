@@ -1,6 +1,6 @@
 import { axiosInstance } from "@/lib/api/axios";
-import { UpdateUserInput } from "@/lib/validations";
-import type { SearchedUser, SearchUsersResponse } from "@/types";
+// import { UpdateUserInput } from "@/lib/validations";
+import type { SearchUsersResponse } from "@/types";
 
 export const userService = {
   getMe: async () => {

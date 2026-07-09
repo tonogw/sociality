@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AxiosError } from "axios";
@@ -13,7 +13,7 @@ import Logo from "@/components/shared/logo";
 import { registerSchema, type RegisterUser } from "@/lib/validations/index";
 import { authService } from "@/services/authService";
 import { setToken } from "@/store"; // Pastikan path ekspor store disesuaikan
-import { AxiosResponse } from "axios";
+// import { AxiosResponse } from "axios";
 import { AuthResponse } from "@/types/auth";
 
 interface ApiErrorResponse {
@@ -22,7 +22,7 @@ interface ApiErrorResponse {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const dispatch = useDispatch();
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export default function RegisterPage() {
 
   const onSubmit = (data: RegisterUser) => {
     setErrorMessage(null);
-    const { confirmPassword, ...payload } = data;
+    const { ...payload } = data;
     mutation.mutate(payload);
   };
 
