@@ -21,19 +21,26 @@ import { useRouter } from "next/navigation";
 import { updateProfileSchema, type UpdateUserInput } from "@/lib/validations";
 import { userService } from "@/services/userService";
 import ImageCropUploader from "@/components/shared/ImageCropUploader";
+import TimelineCard from "@/components/shared/TimelineCard";
 
 interface ApiErrorResponse {
   message?: string;
 }
 
+// 🟢 PERBAIKAN TS 1: Tambahkan skema objek 'author' ke dalam interface Post agar linter lulus bersih
 interface Post {
   id: number;
   imageUrl: string;
   caption?: string;
   createdAt: string;
+  author?: {
+    id: number;
+    username: string;
+    name: string;
+    avatarUrl: string | null;
+  };
 }
 
-// 🟢 PERBAIKAN: Deklarasi interface lokal yang kokoh untuk membebaskan halaman dari jebakan error 'any'
 interface ProfileStateData {
   id: number;
   name: string;
@@ -52,6 +59,8 @@ export default function MyProfilePage() {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
 
@@ -63,7 +72,20 @@ export default function MyProfilePage() {
     queryFn: userService.getMe,
   });
 
-  // Terapkan pengetikan tipe data eksplisit non-any
+  const { data: feedData } = useQuery({
+    queryKey: ["user-my-feed"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${baseUrl}/feed?page=1&limit=20`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          accept: "application/json",
+        },
+      });
+      return res.json();
+    },
+  });
+
   const user = profileData?.data?.profile as ProfileStateData | undefined;
   const stats = profileData?.data?.stats;
 
@@ -72,7 +94,9 @@ export default function MyProfilePage() {
   const followingCount = stats?.following ?? 0;
   const likesCount = stats?.likes ?? 0;
 
-  const userPosts = user?.posts || [];
+  const backupPost = feedData?.data?.items || [];
+  const userPosts =
+    user?.posts && user.posts.length > 0 ? user.posts : backupPost;
   const savedPosts = user?.saved || [];
 
   const {
@@ -244,14 +268,25 @@ export default function MyProfilePage() {
         <div className="w-full flex flex-col gap-4 mt-2">
           <div className="w-full h-12 flex border-b border-[#181D27]">
             <button
-              onClick={() => setActiveTab("posts")}
+              onClick={() => {
+                if (activeTab === "posts") {
+                  setViewMode((prev) => (prev === "grid" ? "list" : "grid"));
+                } else {
+                  setActiveTab("posts");
+                }
+              }}
               className={`flex-1 h-full flex items-center justify-center gap-2 font-bold text-sm border-b-2 transition-all ${
                 activeTab === "posts"
                   ? "border-[#FDFDFD] text-[#FDFDFD]"
                   : "border-transparent text-[#A4A7AE]"
               }`}
             >
-              <Grid size={20} /> Gallery
+              <Grid
+                size={20}
+                className={viewMode === "list" ? "text-[#6936F2]" : ""}
+              />
+
+              <span>Gallery {viewMode === "list" ? "(Feed)" : "(Grid)"}</span>
             </button>
             <button
               onClick={() => setActiveTab("saved")}
@@ -285,22 +320,39 @@ export default function MyProfilePage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-1 w-full animate-fade-in">
-                {userPosts.map((post: Post) => (
-                  <div
-                    key={post.id}
-                    className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden relative"
-                  >
-                    <Image
-                      src={post.imageUrl || "/placeholder.png"}
-                      alt="Post"
-                      fill
-                      className="object-cover"
-                      unoptimized
-                      sizes="120px"
-                    />
+              /* 🟢 SOLUSI MUTLAK: Pisahkan container secara total berdasarkan viewMode */
+              <div className="w-full h-auto animate-fade-in">
+                {viewMode === "grid" ? (
+                  /* 1️⃣ TAMPILAN MODE GRID (Murni Kotak 3-Kolom, Gambar Kecil 120px) */
+                  <div className="grid grid-cols-3 gap-1 w-full">
+                    {userPosts.map((singlePost: Post) => (
+                      <div
+                        key={singlePost.id}
+                        className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden relative"
+                      >
+                        <Image
+                          src={singlePost.imageUrl || "/placeholder.png"}
+                          alt="Post Grid View"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                          sizes="120px" // Ukuran kecil untuk optimalisasi grid 3 kolom
+                        />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  /* 2️⃣ TAMPILAN MODE LIST/FEED (Murni 1 Kolom Vertikal, Melebar Penuh Sesuai Figma) */
+                  <div className="flex flex-col gap-6 w-full items-center">
+                    {userPosts.map((singlePost: Post) => (
+                      <TimelineCard
+                        key={singlePost.id}
+                        post={singlePost} // Mengirim object post tunggal ke komponen shared
+                        currentUsername={user?.username}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )
           ) : savedPosts.length === 0 ? (
@@ -326,6 +378,30 @@ export default function MyProfilePage() {
               ))}
             </div>
           )}
+
+          {/* ) : savedPosts.length === 0 ? (
+            <div className="w-full text-center py-16 text-sm text-[#A4A7AE]">
+              No saved posts yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1 w-full">
+              {savedPosts.map((save: Post) => (
+                <div
+                  key={save.id}
+                  className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden relative"
+                >
+                  <Image
+                    src={save.imageUrl}
+                    alt="Saved"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                    sizes="120px"
+                  />
+                </div>
+              ))}
+            </div>
+          )} */}
         </div>
       </div>
 
@@ -345,7 +421,14 @@ export default function MyProfilePage() {
           <Plus size={22} />
         </button>
         <button className="flex-1 flex flex-col items-center gap-0.5 text-[#7F51F9] cursor-default">
-          <User size={20} />
+          <Image
+            src="/icons/icon-profile.svg"
+            alt="profile"
+            width={24}
+            height={24}
+            unoptimized
+            className="w-6 h-6 cursor-pointer"
+          />
           <span className="text-[10px] font-bold">Profile</span>
         </button>
       </div>
@@ -354,14 +437,48 @@ export default function MyProfilePage() {
       <ImageCropUploader
         isOpen={isCreatePostOpen}
         onClose={() => setIsCreatePostOpen(false)}
-        baseUrl={baseUrl || ""}
-        onUploadSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-          setIsCreatePostOpen(false);
+        onUpload={async (croppedFile, caption) => {
+          try {
+            const token = localStorage.getItem("token") || "";
+            const formData = new FormData();
+            formData.append("image", croppedFile);
+            formData.append("caption", caption || "New Moment Shared");
+
+            const res = await fetch(`${baseUrl}/posts`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            });
+            if (!res.ok) throw new Error("Failed Post new moment");
+            const json = await res.json();
+
+            if (json) {
+              toast.success("Success Post", {
+                description:
+                  "Your gorgeous moment has been uploaded successfully!",
+                style: {
+                  background: "#079455",
+                  color: "#FFFFFF",
+                  borderRadius: "12px",
+                  border: "none",
+                },
+              });
+              queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+              queryClient.invalidateQueries({ queryKey: ["user-my-feed"] });
+              setIsCreatePostOpen(false);
+            }
+          } catch (err) {
+            toast.error(
+              err instanceof Error ? err.message : "Failed process post",
+            );
+          }
         }}
+        isUploading={false}
       />
 
-      {/* MODAL EDIT BASIC PROFILE (🟢 PERBAIKAN: Ganti tag img lama dengan tag Image Next.js valid) */}
+      {/* MODAL EDIT BASIC PROFILE */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col items-center gap-5 relative max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -413,6 +530,7 @@ export default function MyProfilePage() {
                 <label className="text-xs font-bold text-white">Name</label>
                 <div className="w-full h-11 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                   <input
+                    id="name"
                     type="text"
                     {...register("name")}
                     className="w-full bg-transparent text-white text-sm focus:outline-none"
@@ -427,6 +545,7 @@ export default function MyProfilePage() {
                 <label className="text-xs font-bold text-white">Username</label>
                 <div className="w-full h-11 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                   <input
+                    id="username"
                     type="text"
                     {...register("username")}
                     className="w-full bg-transparent text-white text-sm focus:outline-none"
@@ -445,6 +564,7 @@ export default function MyProfilePage() {
                 </label>
                 <div className="w-full h-11 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                   <input
+                    id="phone"
                     type="text"
                     {...register("phone")}
                     className="w-full bg-transparent text-white text-sm focus:outline-none"
