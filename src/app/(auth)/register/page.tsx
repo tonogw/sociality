@@ -88,6 +88,7 @@ export default function RegisterPage() {
               alt="logo"
               sizes="54px"
               fill
+              unoptimized
               className="w-14 h-14 object-contain"
             />
           </div>

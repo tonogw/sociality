@@ -190,6 +190,7 @@ function ProfileContent() {
                   alt={profile.name}
                   width={64}
                   height={64}
+                  unoptimized
                   className="w-14 h-14 object-cover"
                 />
               ) : (

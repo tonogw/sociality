@@ -32,6 +32,7 @@ export default function Logo({ showText = true }: LogoProps) {
           alt="logo"
           sizes="54px"
           fill
+          unoptimized
           className="w-14 h-14"
         />
       </div>

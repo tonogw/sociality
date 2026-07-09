@@ -147,6 +147,7 @@ function FeedContent() {
                             src={post.author.avatarUrl}
                             alt={post.author.name}
                             fill
+                            unoptimized
                             sizes="361px"
                             className="object-cover"
                           />

@@ -44,6 +44,7 @@ export default function AuthInput({
               alt="toggle"
               width={20}
               height={20}
+              unoptimized
             />
           </button>
         )}

@@ -28,7 +28,13 @@ export default function AuthCard({
         relative w-8 h-8 
         "
         >
-          <Image src={Logo} alt="Foody logo" fill className="object-contain" />
+          <Image
+            src={Logo}
+            alt="Foody logo"
+            fill
+            unoptimized
+            className="object-contain"
+          />
         </div>
         <span className="text-[28px] font-extrabold text-gray-900 tracking-tight">
           Foody
