@@ -112,6 +112,7 @@ export default function ImageCropUploader({
       setImageSrc(null);
       setCaption("");
     } catch (err) {
+      console.error(err);
       toast.error("Gagal memproses pemotongan gambar.");
     }
   };

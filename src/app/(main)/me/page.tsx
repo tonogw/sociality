@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { AxiosError } from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { updateProfileSchema, type UpdateUserInput } from "@/lib/validations";
+import { updateProfileSchema, type UpdateUserInput } from "@/validations/auth";
 import { userService } from "@/services/userService";
 import ImageCropUploader from "@/components/shared/ImageCropUploader";
 import TimelineCard from "@/components/shared/TimelineCard";

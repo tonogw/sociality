@@ -10,7 +10,7 @@ import { AxiosError } from "axios";
 import { useDispatch } from "react-redux";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-import { loginSchema, type LoginInputs } from "@/lib/validations/index";
+import { loginSchema, type LoginInputs } from "@/validations/auth";
 import { authService } from "@/services/authService";
 import { setToken } from "@/store";
 import Logo from "@/components/shared/Logo";

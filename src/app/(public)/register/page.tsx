@@ -10,7 +10,7 @@ import Link from "next/link";
 import { AxiosError } from "axios";
 import { useDispatch } from "react-redux";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { registerSchema, type RegisterUser } from "@/lib/validations/index";
+import { registerSchema, type RegisterUser } from "@/validations/auth";
 import { authService } from "@/services/authService";
 import { setToken } from "@/store"; // Pastikan path ekspor store disesuaikan
 // import { AxiosResponse } from "axios";

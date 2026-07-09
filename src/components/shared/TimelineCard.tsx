@@ -5,26 +5,27 @@ import Image from "next/image";
 import { Heart, MessageSquare, Send, Bookmark, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { TimelineCardProps } from "@/types/post";
 
-interface TimelineCardProps {
-  post: {
-    id: number;
-    imageUrl: string;
-    caption?: string;
-    createdAt: string;
-    author?: {
-      id: number;
-      username: string;
-      name: string;
-      avatarUrl: string | null;
-    };
-    likeCount?: number;
-    commentCount?: number;
-    likedByMe?: boolean;
-    savedByMe?: boolean; // Mengantisipasi skema bookmark masa depan
-  };
-  currentUsername?: string; // Untuk pengecekan hak akses tombol hapus data post sendiri
-}
+// interface TimelineCardProps {
+//   post: {
+//     id: number;
+//     imageUrl: string;
+//     caption?: string;
+//     createdAt: string;
+//     author?: {
+//       id: number;
+//       username: string;
+//       name: string;
+//       avatarUrl: string | null;
+//     };
+//     likeCount?: number;
+//     commentCount?: number;
+//     likedByMe?: boolean;
+//     savedByMe?: boolean; // Mengantisipasi skema bookmark masa depan
+//   };
+//   currentUsername?: string; // Untuk pengecekan hak akses tombol hapus data post sendiri
+// }
 
 export default function TimelineCard({
   post,

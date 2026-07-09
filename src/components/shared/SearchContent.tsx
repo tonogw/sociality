@@ -179,7 +179,7 @@ export default function SearchContent() {
       ref={containerRef}
       className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-24 font-sans flex flex-col items-center"
     >
-      <div className="w-full max-w-[361px] flex flex-col gap-4">
+      <div className="w-full max-w-90.25 flex flex-col gap-4">
         {loadingPrev && (
           <div className="w-full py-2 flex items-center justify-center gap-2">
             <Loader2 className="animate-spin text-[#6936F2]" size={16} />
@@ -211,7 +211,7 @@ export default function SearchContent() {
                 key={user.id}
                 onClick={() =>
                   router.push(
-                    `/profile/${user.username}?fromQ=${encodeURIComponent(query)}&lastPage=${bottomPage}`,
+                    `/${user.username}?fromQ=${encodeURIComponent(query)}&lastPage=${bottomPage}`,
                   )
                 }
                 className="w-full h-14 flex items-center gap-3 border-b border-zinc-950/50 pb-2 cursor-pointer p-1 rounded-xl transition-all hover:bg-zinc-900/40"
@@ -227,7 +227,7 @@ export default function SearchContent() {
                       unoptimized
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-sm font-bold text-white">
+                    <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-sm font-bold text-white">
                       {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                     </div>
                   )}
