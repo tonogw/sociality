@@ -11,7 +11,7 @@ export default function MainLayout({
       <Suspense fallback={null}>
         <Navbar />
       </Suspense>
-      <main className="flex-1 w-full max-w-[393px] mx-auto">{children}</main>
+      <main className="flex-1 w-full max-w-98.25 mx-auto">{children}</main>
     </div>
   );
 }
