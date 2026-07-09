@@ -378,30 +378,6 @@ export default function MyProfilePage() {
               ))}
             </div>
           )}
-
-          {/* ) : savedPosts.length === 0 ? (
-            <div className="w-full text-center py-16 text-sm text-[#A4A7AE]">
-              No saved posts yet.
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-1 w-full">
-              {savedPosts.map((save: Post) => (
-                <div
-                  key={save.id}
-                  className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden relative"
-                >
-                  <Image
-                    src={save.imageUrl}
-                    alt="Saved"
-                    fill
-                    className="object-cover"
-                    unoptimized
-                    sizes="120px"
-                  />
-                </div>
-              ))}
-            </div>
-          )} */}
         </div>
       </div>
 
