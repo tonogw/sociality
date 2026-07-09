@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import { AxiosError } from "axios";
 import { useDispatch } from "react-redux";
@@ -86,10 +87,11 @@ export default function RegisterPage() {
             <Image
               src="/icons/Logo.svg"
               alt="logo"
-              sizes="54px"
-              fill
+              // sizes="54px"
+              width={54}
+              height={54}
               unoptimized
-              className="w-14 h-14 object-contain"
+              className="w-14 h-14 object-contain bg-black"
             />
           </div>
           <span className="text-2xl font-bold text-[#FDFDFD] tracking-tight">
