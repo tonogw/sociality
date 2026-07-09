@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,10 +13,12 @@ import {
   Home,
   Plus,
   User,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { updateProfileSchema, type UpdateUserInput } from "@/lib/validations";
 import { userService } from "@/services/userService";
 
@@ -33,27 +35,38 @@ interface Post {
 
 export default function MyProfilePage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // State Baru Pengendali Modal Popup Create Post
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [postFile, setPostFile] = useState<File | null>(null);
+  const [postPreviewUrl, setPostPreviewUrl] = useState<string | null>(null);
+  const [captionText, setCaptionText] = useState("");
+  const postFileInputRef = useRef<HTMLInputElement>(null);
+
+  // State Profile Image Edit
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // 1. Ambil Data Profil Pengguna (Termasuk stats dari API)
+  // 1. Ambil Data Profil Pengguna
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["user-profile"],
     queryFn: userService.getMe,
   });
 
-  const user = profileData?.data?.profile; // || profileData?.user;
+  const user = profileData?.data?.profile;
   const stats = profileData?.data?.stats;
 
-  // Ambil counter stats asli dari API. Jika belum ada dari backend, default ke 0
   const postCount = stats?.posts ?? 0;
   const followersCount = stats?.followers ?? 0;
   const followingCount = stats?.following ?? 0;
   const likesCount = stats?.likes ?? 0;
 
-  // Tempat menampung data array posts (Guna mengecek Gallery kosong atau tidak)
   const userPosts = user?.posts || [];
   const savedPosts = user?.saved || [];
 
@@ -79,6 +92,7 @@ export default function MyProfilePage() {
     }
   }, [user, reset]);
 
+  // Mutation Edit Profil
   const mutation = useMutation({
     mutationFn: userService.updateMe,
     onSuccess: () => {
@@ -101,12 +115,72 @@ export default function MyProfilePage() {
     },
   });
 
+  // MUTATION BARU: Eksekusi Kirim Gambar Feed ke Endpoint Backend /api/posts
+  const createPostMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${baseUrl}/posts`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Gagal mempublikasikan postingan.");
+      return res.json();
+    },
+    onSuccess: () => {
+      // Refresh cache otomatis agar gambar langsung nangkring di baris Gallery Grid
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      toast.success("Post published successfully!", {
+        style: {
+          background: "#079455",
+          color: "#FFFFFF",
+          borderRadius: "8px",
+          border: "none",
+        },
+      });
+      // Bersihkan form
+      setIsCreatePostOpen(false);
+      setPostFile(null);
+      setPostPreviewUrl(null);
+      setCaptionText("");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Gagal mengunggah postingan baru.");
+    },
+  });
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
+  };
+
+  // Handler menangkap seleksi berkas foto timeline baru
+  const handlePostFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPostFile(file);
+      setPostPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  // Handler kirim form Create Post
+  const handlePublishPost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!postFile) {
+      toast.error("Silakan pilih gambar terlebih dahulu.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("image", postFile);
+    formData.append(
+      "caption",
+      captionText || "Moments shared from my gallery 📸",
+    );
+
+    createPostMutation.mutate(formData);
   };
 
   const onSubmit = (data: UpdateUserInput) => {
@@ -132,17 +206,28 @@ export default function MyProfilePage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black text-white px-4 pt-6 pb-24 font-sans flex flex-col items-center">
-      {/* CARD CONTAINER PROFIL */}
+    <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
+      {/* INPUT FILE TERSEMBUNYI KHUSUS UNTUK UPLOAD POST */}
+      <input
+        type="file"
+        ref={postFileInputRef}
+        onChange={handlePostFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+
       <div className="w-full max-w-[361px] flex flex-col gap-4">
         {/* INFO USER */}
         <div className="flex items-center gap-3">
           <div className="w-16 h-16 rounded-full bg-zinc-800 border border-[#181D27] overflow-hidden flex items-center justify-center relative">
             {user?.avatarUrl ? (
-              <img
+              <Image
                 src={user.avatarUrl}
                 alt="Avatar"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                unoptimized
+                sizes="64px"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xl font-bold">
@@ -188,7 +273,8 @@ export default function MyProfilePage() {
           {user?.bio ||
             "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!"}
         </p>
-        {/* DYNAMIC STATS COUNTER BAR (Sesuai Data Figma) */}
+
+        {/* STATS COUNTER BAR */}
         <div className="flex items-center gap-4 w-full h-[50px] border-y border-[#181D27] py-2 mt-2">
           <div className="flex-1 flex flex-col items-center">
             <span className="text-lg font-bold text-[#FDFDFD]">
@@ -244,12 +330,10 @@ export default function MyProfilePage() {
             </button>
           </div>
 
-          {/* ============================================================
-              KONDISI KONTEN: DYNAMIC EMPTY STATE VS GRID IMAGES 
-              ============================================================ */}
+          {/* GALLERY CONTENT SEGMENT */}
           {activeTab === "posts" ? (
             userPosts.length === 0 ? (
-              /* KONDISI FIGMA 3: EMPTY POST STATE (Up Close & Personal) */
+              /* EMPTY POST STATE -> SEKARANG MEMICU MODAL POPUP CREATE */
               <div className="w-full flex flex-col items-center text-center px-4 py-12 gap-6 animate-fade-in">
                 <div className="flex flex-col gap-2">
                   <h3 className="text-base font-bold text-white tracking-tight">
@@ -257,35 +341,37 @@ export default function MyProfilePage() {
                   </h3>
                   <p className="text-sm text-[#A4A7AE] leading-relaxed max-w-[280px]">
                     Share your first post and let the world see your moments,
-                    passions, and memories. Make this space truly yours.
+                    passions, and memories.
                   </p>
                 </div>
                 <button
-                  onClick={() => toast.info("Redirecting to create post...")}
+                  onClick={() => setIsCreatePostOpen(true)}
                   className="w-full max-w-[280px] h-11 bg-[#6936F2] hover:bg-[#522BC8] text-[#FDFDFD] font-bold rounded-full text-sm transition-all duration-200 shadow-lg cursor-pointer flex items-center justify-center"
                 >
                   Upload My First Post
                 </button>
               </div>
             ) : (
-              /* KONDISI FIGMA 1: GRID GALLERY ADA ISI */
-              <div className="grid grid-cols-3 gap-1 w-full">
+              /* GRID GALLERY AKTIF */
+              <div className="grid grid-cols-3 gap-1 w-full animate-fade-in">
                 {userPosts.map((post: Post) => (
                   <div
                     key={post.id}
-                    className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden"
+                    className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden relative"
                   >
-                    <img
+                    <Image
                       src={post.imageUrl || "/placeholder.png"}
                       alt="Post"
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                      sizes="120px"
                     />
                   </div>
                 ))}
               </div>
             )
-          ) : /* TAB SAVED */
-          savedPosts.length === 0 ? (
+          ) : savedPosts.length === 0 ? (
             <div className="w-full text-center py-16 text-sm text-[#A4A7AE]">
               No saved posts yet.
             </div>
@@ -294,12 +380,15 @@ export default function MyProfilePage() {
               {savedPosts.map((save: Post) => (
                 <div
                   key={save.id}
-                  className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden"
+                  className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden relative"
                 >
-                  <img
+                  <Image
                     src={save.imageUrl}
                     alt="Saved"
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                    sizes="120px"
                   />
                 </div>
               ))}
@@ -308,30 +397,119 @@ export default function MyProfilePage() {
         </div>
       </div>
 
-      {/* FIXED BOTTOM NAV MENU BAR */}
+      {/* FIXED BOTTOM NAV MENU BAR (Figma Connected) */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[345px] h-16 bg-[#0A0D12]/90 border border-[#181D27] backdrop-blur-[50px] rounded-full flex items-center justify-center gap-4 px-6 z-20 shadow-xl">
-        <button className="flex-1 flex flex-col items-center gap-0.5 text-white">
+        <button
+          onClick={() => router.push("/")}
+          className="flex-1 flex flex-col items-center gap-0.5 text-zinc-400 hover:text-white cursor-pointer"
+        >
           <Home size={20} />
           <span className="text-[10px] font-bold">Home</span>
         </button>
-        <button className="w-11 h-11 bg-[#6936F2] hover:bg-[#522BC8] rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer shrink-0">
+        {/* Tombol + besar di tengah sekarang memicu popup modal buat postingan */}
+        <button
+          onClick={() => setIsCreatePostOpen(true)}
+          className="w-11 h-11 bg-[#6936F2] hover:bg-[#522BC8] rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer shrink-0 transition-transform active:scale-95"
+        >
           <Plus size={22} />
         </button>
-        <button className="flex-1 flex flex-col items-center gap-0.5 text-[#7F51F9]">
+        <button className="flex-1 flex flex-col items-center gap-0.5 text-[#7F51F9] cursor-default">
           <User size={20} />
           <span className="text-[10px] font-bold">Profile</span>
         </button>
       </div>
 
       {/* ============================================================
-          MODAL DRAWER POPUP: EDIT BASIC PROFILE (Bebas 'any')
+          MODAL DRAWER POPUP BARU: CREATE TIMELINE TIMELINE POST
+          ============================================================ */}
+      {isCreatePostOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col gap-4 relative shadow-2xl">
+            <button
+              onClick={() => {
+                setIsCreatePostOpen(false);
+                setPostPreviewUrl(null);
+              }}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-base font-bold text-white tracking-tight text-center">
+              Create New Post
+            </h3>
+
+            <form
+              onSubmit={handlePublishPost}
+              className="flex flex-col gap-4 w-full"
+            >
+              {/* AREA UNGGAL MEDIA */}
+              <div
+                onClick={() => postFileInputRef.current?.click()}
+                className="w-full aspect-square bg-[#0A0D12] border border-dashed border-[#181D27] rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden group"
+              >
+                {postPreviewUrl ? (
+                  <Image
+                    src={postPreviewUrl}
+                    alt="Preview Post"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                    sizes="361px"
+                  />
+                ) : (
+                  <>
+                    <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-500 border border-zinc-800 group-hover:text-white transition-colors">
+                      <Camera size={18} />
+                    </div>
+                    <span className="text-xs text-zinc-400 font-medium">
+                      Select Image from Mac
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* INPUT CAPTION TEKS */}
+              <div className="flex flex-col gap-1 w-full">
+                <label className="text-xs font-bold text-zinc-400">
+                  Caption
+                </label>
+                <div className="w-full bg-[#0A0D12] border border-[#181D27] rounded-xl p-3 flex">
+                  <textarea
+                    rows={2}
+                    value={captionText}
+                    onChange={(e) => setCaptionText(e.target.value)}
+                    placeholder="Write a caption for your first moment..."
+                    className="w-full bg-transparent text-white text-sm focus:outline-none resize-none placeholder-zinc-600"
+                  />
+                </div>
+              </div>
+
+              {/* ACTION EXECUTE BUTTON */}
+              <button
+                type="submit"
+                disabled={createPostMutation.isPending || !postFile}
+                className="w-full h-11 bg-[#6936F2] hover:bg-[#522BC8] disabled:bg-zinc-900 disabled:text-zinc-600 font-bold rounded-full text-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
+              >
+                {createPostMutation.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  "Publish Post 🚀"
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================
+          MODAL DRAWER POPUP: EDIT BASIC PROFILE
           ============================================================ */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col items-center gap-5 relative max-h-[90vh] overflow-y-auto shadow-2xl">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white"
             >
               <X size={20} />
             </button>

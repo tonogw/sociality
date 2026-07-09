@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 interface LogoProps {
   showText?: boolean;
@@ -11,7 +12,7 @@ export default function Logo({ showText = true }: LogoProps) {
     <Link href="/" className="flex items-center gap-2.75 group select-none">
       {/* ICON path extracted from figma */}
       <div className="w-7.5 h-7.5 flex items-center justify-center relative">
-        <svg
+        {/* <svg
           width="30"
           height="30"
           viewBox="0 0 30 30"
@@ -25,7 +26,14 @@ export default function Logo({ showText = true }: LogoProps) {
             strokeWidth="2.5"
             strokeLinecap="round"
           />
-        </svg>
+        </svg> */}
+        <Image
+          src="/icons/Logo.svg"
+          alt="logo"
+          sizes="54px"
+          fill
+          className="w-14 h-14"
+        />
       </div>
 
       {showText && (
