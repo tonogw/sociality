@@ -1,16 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
-  return NextResponse.next();
+export function middleware() {
+  return NextResponse.redirect(new URL("/login", "http://localhost:3000"));
 }
 
 export const config = {
-  matcher: [
-    "/home/:path*",
-    "/search/:path*",
-    "/create/:path*",
-    "/my/:path*",
-    "/saved/:path*",
-    "/settings/:path*",
-  ],
+  matcher: "/:path*",
 };

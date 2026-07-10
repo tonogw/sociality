@@ -9,7 +9,7 @@ interface LogoProps {
 
 export default function Logo({ showText = true }: LogoProps) {
   return (
-    <Link href="/" className="flex items-center gap-2.75 group select-none">
+    <Link href="/feed" className="flex items-center gap-2.75 group select-none">
       {/* ICON path extracted from figma */}
       <div className="w-7.5 h-7.5 flex items-center justify-center relative">
         {/* <svg

@@ -288,7 +288,7 @@ export default function MyProfilePage() {
       {/* FIXED BOTTOM NAV MENU BAR */}
 
       <BottomNavbar
-        onHome={() => router.push("/")}
+        onHome={() => router.push("/feed")}
         onCreatePost={() => setIsCreatePostOpen(true)}
       />
 

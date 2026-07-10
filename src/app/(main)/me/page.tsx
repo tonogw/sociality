@@ -384,7 +384,7 @@ export default function MyProfilePage() {
       {/* FIXED BOTTOM NAV MENU BAR */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[345px] h-16 bg-[#0A0D12]/90 border border-[#181D27] backdrop-blur-[50px] rounded-full flex items-center justify-center gap-4 px-6 z-20 shadow-xl">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/posts")}
           className="flex-1 flex flex-col items-center gap-0.5 text-zinc-400 hover:text-white cursor-pointer"
         >
           <Home size={20} />

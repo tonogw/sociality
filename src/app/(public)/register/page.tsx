@@ -51,7 +51,7 @@ export default function RegisterPage() {
         localStorage.setItem("token", token);
         dispatch(setToken(token));
         // queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-        router.push("/");
+        router.push("/feed");
       } else {
         setErrorMessage("Token not found in response payload.");
       }
