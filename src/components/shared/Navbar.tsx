@@ -97,7 +97,7 @@ export default function Navbar() {
       } else if (pathname.startsWith("/profile")) {
         router.push("/search");
       } else {
-        router.push("/");
+        router.push("/feed");
       }
     };
     return (

@@ -10,7 +10,7 @@ import { AxiosError } from "axios";
 import { useDispatch } from "react-redux";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-import { loginSchema, type LoginInputs } from "@/lib/validations/index";
+import { loginSchema, type LoginInputs } from "@/validations/auth";
 import { authService } from "@/services/authService";
 import { setToken } from "@/store";
 import Logo from "@/components/shared/Logo";
@@ -46,12 +46,22 @@ export default function LoginPage() {
       const token = apiResponse.data.token;
 
       if (token) {
+        // Existing
         localStorage.setItem("token", token);
+
+        // new code to enable middleware read token
+        document.cookie = [
+          `token=${token}`,
+          "path=/",
+          "max-age=604800", // 7 days
+          "SameSite=Lax",
+        ].join("; ");
+
         dispatch(setToken(token));
 
         // Bersihkan cache profile user lama agar ter-fetch yang baru
         queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-        router.push("/");
+        router.push("/feed");
       } else {
         setErrorMessage("Token not found in response payload.");
       }

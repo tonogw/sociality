@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { AxiosError } from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { updateProfileSchema, type UpdateUserInput } from "@/lib/validations";
+import { updateProfileSchema, type UpdateUserInput } from "@/validations/auth";
 import { userService } from "@/services/userService";
 import ImageCropUploader from "@/components/shared/ImageCropUploader";
 import TimelineCard from "@/components/shared/TimelineCard";
@@ -378,37 +378,13 @@ export default function MyProfilePage() {
               ))}
             </div>
           )}
-
-          {/* ) : savedPosts.length === 0 ? (
-            <div className="w-full text-center py-16 text-sm text-[#A4A7AE]">
-              No saved posts yet.
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-1 w-full">
-              {savedPosts.map((save: Post) => (
-                <div
-                  key={save.id}
-                  className="w-full aspect-square bg-zinc-900 border border-[#181D27] rounded-sm overflow-hidden relative"
-                >
-                  <Image
-                    src={save.imageUrl}
-                    alt="Saved"
-                    fill
-                    className="object-cover"
-                    unoptimized
-                    sizes="120px"
-                  />
-                </div>
-              ))}
-            </div>
-          )} */}
         </div>
       </div>
 
       {/* FIXED BOTTOM NAV MENU BAR */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[345px] h-16 bg-[#0A0D12]/90 border border-[#181D27] backdrop-blur-[50px] rounded-full flex items-center justify-center gap-4 px-6 z-20 shadow-xl">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/feed")}
           className="flex-1 flex flex-col items-center gap-0.5 text-zinc-400 hover:text-white cursor-pointer"
         >
           <Home size={20} />

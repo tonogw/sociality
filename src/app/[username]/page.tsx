@@ -76,7 +76,7 @@ function ProfileContent() {
   //         `/users/search?q=${encodeURIComponent(fromQuery)}&page=${lastPage}`,
   //       );
   //     } else {
-  //       router.push("/");
+  //       router.push("/feed");
   //     }
   //   };
 
@@ -139,7 +139,7 @@ function ProfileContent() {
   //         `/users/search?q=${encodeURIComponent(fromQuery)}&page=${lastPage}&limit=20`,
   //       );
   //     } else {
-  //       router.push("/");
+  //       router.push("/feed");
   //     }
   //   };
 
