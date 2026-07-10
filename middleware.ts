@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export function middleware() {
-  return NextResponse.redirect(new URL("/login", "http://localhost:3000"));
+export function middleware(request: NextRequest) {
+  return NextResponse.redirect(new URL("/login", request.url));
 }
 
 export const config = {
-  matcher: "/:path*",
+  matcher: "/",
 };
