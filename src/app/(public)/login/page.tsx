@@ -46,7 +46,17 @@ export default function LoginPage() {
       const token = apiResponse.data.token;
 
       if (token) {
+        // Existing
         localStorage.setItem("token", token);
+
+        // new code to enable middleware read token
+        document.cookie = [
+          `token=${token}`,
+          "path=/",
+          "max-age=604800", // 7 days
+          "SameSite=Lax",
+        ].join("; ");
+
         dispatch(setToken(token));
 
         // Bersihkan cache profile user lama agar ter-fetch yang baru
