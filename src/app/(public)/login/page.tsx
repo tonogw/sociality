@@ -61,7 +61,7 @@ export default function LoginPage() {
 
         // Bersihkan cache profile user lama agar ter-fetch yang baru
         queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-        router.push("/feed");
+        router.push("/my");
       } else {
         setErrorMessage("Token not found in response payload.");
       }
