@@ -1,30 +1,49 @@
 "use client";
 
 interface ProfileStatsProps {
-  stats: any;
+  postCount: number;
+  followersCount: number;
+  followingCount: number;
+  likesCount: number;
 }
 
-export default function ProfileStats({ stats }: ProfileStatsProps) {
-  const items = [
-    { label: "Post", value: stats?.posts ?? 0 },
-    { label: "Followers", value: stats?.followers ?? 0 },
-    { label: "Following", value: stats?.following ?? 0 },
-    { label: "Likes", value: stats?.likes ?? 0 },
-  ];
-
+export default function ProfileStats({
+  postCount,
+  followersCount,
+  followingCount,
+  likesCount,
+}: ProfileStatsProps) {
   return (
-    <div className="flex items-center gap-4 w-full h-[50px] border-y border-[#181D27] py-2">
-      {items.map((item, idx) => (
-        <div
-          key={idx}
-          className="flex-1 flex flex-col items-center justify-center"
-        >
-          <span className="text-lg font-bold text-[#FDFDFD]">{item.value}</span>
-          <span className="text-xs text-[#A4A7AE] font-medium">
-            {item.label}
-          </span>
-        </div>
-      ))}
+    <div className="flex items-center gap-4 w-full h-[50px] border-y border-[#181D27] py-2 mt-2">
+      <div className="flex-1 flex flex-col items-center">
+        <span className="text-lg font-bold text-[#FDFDFD]">{postCount}</span>
+        <span className="text-xs text-[#A4A7AE]">Post</span>
+      </div>
+
+      <div className="w-[1px] h-6 bg-[#181D27]" />
+
+      <div className="flex-1 flex flex-col items-center">
+        <span className="text-lg font-bold text-[#FDFDFD]">
+          {followersCount}
+        </span>
+        <span className="text-xs text-[#A4A7AE]">Followers</span>
+      </div>
+
+      <div className="w-[1px] h-6 bg-[#181D27]" />
+
+      <div className="flex-1 flex flex-col items-center">
+        <span className="text-lg font-bold text-[#FDFDFD]">
+          {followingCount}
+        </span>
+        <span className="text-xs text-[#A4A7AE]">Following</span>
+      </div>
+
+      <div className="w-[1px] h-6 bg-[#181D27]" />
+
+      <div className="flex-1 flex flex-col items-center">
+        <span className="text-lg font-bold text-[#FDFDFD]">{likesCount}</span>
+        <span className="text-xs text-[#A4A7AE]">Likes</span>
+      </div>
     </div>
   );
 }
