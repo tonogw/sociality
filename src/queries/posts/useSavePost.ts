@@ -1,9 +1,10 @@
-import { postService } from "@/services/postService";
-import { useQuery } from "@tanstack/react-query";
+"use client";
 
-export function useSavePost(postId: number) {
-  return useQuery({
-    queryKey: ["postId"],
-    queryFn: () => postService.savePost(postId),
+import { postService } from "@/services/postService";
+import { useMutation } from "@tanstack/react-query";
+
+export function useSavePost() {
+  return useMutation({
+    mutationFn: postService.savePost,
   });
 }

@@ -1,9 +1,10 @@
-import { postService } from "@/services/postService";
-import { useQuery } from "@tanstack/react-query";
+"use client";
 
-export function useUnsavePost(postId: number) {
-  return useQuery({
-    queryKey: ["postId"],
-    queryFn: () => postService.unsavePost(postId),
+import { postService } from "@/services/postService";
+import { useMutation } from "@tanstack/react-query";
+
+export function useUnsavePost() {
+  return useMutation({
+    mutationFn: postService.unsavePost,
   });
 }

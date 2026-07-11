@@ -29,3 +29,8 @@ export interface DeletedCommentResponse {
   message: string;
   data: string | null;
 }
+
+export interface CreateCommentInput {
+  postId: number;
+  text: string;
+}

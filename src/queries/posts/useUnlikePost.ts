@@ -1,9 +1,10 @@
-import { postService } from "@/services/postService";
-import { useQuery } from "@tanstack/react-query";
+"use client";
 
-export function useUnlikePost(postId: number) {
-  return useQuery({
-    queryKey: ["postId"],
-    queryFn: () => postService.unlikePost(postId),
+import { postService } from "@/services/postService";
+import { useMutation } from "@tanstack/react-query";
+
+export function useUnlikePost() {
+  return useMutation({
+    mutationFn: postService.unlikePost,
   });
 }

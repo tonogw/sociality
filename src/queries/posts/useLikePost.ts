@@ -1,9 +1,10 @@
-import { postService } from "@/services/postService";
-import { useQuery } from "@tanstack/react-query";
+"use client";
 
-export function useLikePost(postId: number) {
-  return useQuery({
-    queryKey: ["postId", postId],
-    queryFn: () => postService.likePost(postId),
+import { postService } from "@/services/postService";
+import { useMutation } from "@tanstack/react-query";
+
+export function useLikePost() {
+  return useMutation({
+    mutationFn: postService.likePost,
   });
 }
