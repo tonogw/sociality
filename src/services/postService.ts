@@ -5,7 +5,6 @@ import {
   DeletePostResponse,
   PostResponse,
 } from "@/types/post";
-import { CommentItem, CommentResponse } from "@/types/comment";
 
 export const postService = {
   // KOREKSI UTAMA: Mengarah ke /feed sesuai spesifikasi swagger timeline Anda
@@ -62,25 +61,6 @@ export const postService = {
   // Aksi Idempotent Unlike Post
   unlikePost: async (postId: number): Promise<PostResponse> => {
     const response = await axiosInstance.delete(`/posts/${postId}/like`);
-    return response.data;
-  },
-
-  getComment: async (
-    postId: number,
-    page: number = 1,
-    limit: number = 10, //10 per fetch
-  ): Promise<CommentResponse> => {
-    const response = await axiosInstance.get(
-      `/posts/${postId}/comments?page=${page}&limit=${limit}`,
-    );
-    return response.data;
-  },
-
-  postComment: async (postId: number, text: string): Promise<CommentItem> => {
-    const response = await axiosInstance.post(`/posts/${postId}/comments`, {
-      text,
-    });
-
     return response.data;
   },
 };

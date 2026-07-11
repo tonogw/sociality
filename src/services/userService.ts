@@ -1,4 +1,5 @@
 import { axiosInstance } from "@/lib/api/axios";
+import { Follow } from "@/types/follow";
 // import { UpdateUserInput } from "@/lib/validations";
 import type {
   UserProfileData,
@@ -7,7 +8,7 @@ import type {
   FollowingResponse,
 } from "@/types/user";
 
-import type { GetMeFollowers, GetMeFollowing } from "@/types/me";
+// import type { GetMeFollowers, GetMeFollowing } from "@/types/me";
 
 export const userService = {
   getUser: async (username: string): Promise<UserProfileData> => {
@@ -15,13 +16,13 @@ export const userService = {
     return response.data.data;
   },
 
-  follow: async (username: string) => {
+  follow: async (username: string): Promise<Follow> => {
     const response = await axiosInstance.post(`/follow/${username}`);
 
     return response.data;
   },
 
-  unfollow: async (username: string) => {
+  unfollow: async (username: string): Promise<Follow> => {
     const response = await axiosInstance.delete(`/follow/${username}`);
 
     return response.data;

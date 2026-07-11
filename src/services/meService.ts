@@ -6,6 +6,7 @@ import {
   GetMyPostData,
   MySavedResponse,
   MyLikesResponse,
+  UpdateMyProfileData,
 } from "@/types/me";
 
 export const meService = {
@@ -14,7 +15,7 @@ export const meService = {
     return response.data;
   },
 
-  updateMe: async (formData: FormData) => {
+  updateMe: async (formData: FormData): Promise<UpdateMyProfileData> => {
     const response = await axiosInstance.patch("/me", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
