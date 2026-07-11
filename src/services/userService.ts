@@ -1,21 +1,53 @@
 import { axiosInstance } from "@/lib/api/axios";
 // import { UpdateUserInput } from "@/lib/validations";
-import type { SearchUsersResponse } from "@/types";
+import type {
+  UserProfileData,
+  SearchUsersResponse,
+  FollowersResponse,
+  FollowingResponse,
+} from "@/types/user";
+
+import type { GetMeFollowers, GetMeFollowing } from "@/types/me";
 
 export const userService = {
-  getMe: async () => {
-    const response = await axiosInstance.get("/me");
+  getUser: async (username: string): Promise<UserProfileData> => {
+    const response = await axiosInstance.get(`/users/${username}`);
+    return response.data.data;
+  },
+
+  follow: async (username: string) => {
+    const response = await axiosInstance.post(`/follow/${username}`);
+
     return response.data;
   },
 
-  // Fungsi Baru: Kirim data pembaruan basic info profil
-  // updateMe: async (payload: UpdateUserInput) => {
-  updateMe: async (formData: FormData) => {
-    const response = await axiosInstance.patch("/me", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+  unfollow: async (username: string) => {
+    const response = await axiosInstance.delete(`/follow/${username}`);
+
+    return response.data;
+  },
+
+  getFollowers: async (
+    username: string,
+    page: number,
+    limit: number,
+  ): Promise<FollowersResponse> => {
+    const response = await axiosInstance.get(
+      `/users/${username}/followers?page=${page}&limit=${limit}`,
+    );
+
+    return response.data;
+  },
+
+  getFollowing: async (
+    username: string,
+    page: number,
+    limit: number,
+  ): Promise<FollowingResponse> => {
+    const response = await axiosInstance.get(
+      `/users/${username}/following?page=${page}&limit=${limit}`,
+    );
+
     return response.data;
   },
 
@@ -25,7 +57,7 @@ export const userService = {
     limit: number = 20,
   ): Promise<SearchUsersResponse> => {
     const response = await axiosInstance.get(
-      `/users/search?q=encodeURIComponent(queryText)}&page=${page}&limit=${limit}`,
+      `/users/search?q=${encodeURIComponent(queryText)}&page=${page}&limit=${limit}`,
     );
     return response.data;
   },

@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
-import type { SearchedUser } from "@/types";
+import type { SearchedUser } from "@/types/user";
 
 // interface SearchedUser {
 //   id: number;

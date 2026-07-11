@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { Loader2, Send, Grid, Heart } from "lucide-react";
 import Image from "next/image";
-import type { UserProfileData } from "@/types";
+import type { UserProfileData } from "@/types/user";
 
 function ProfileContent() {
   const params = useParams();
@@ -79,9 +79,11 @@ function ProfileContent() {
   //       router.push("/feed");
   //     }
   //   };
-
-  const handleFollowAction = async () => {
-    if (!profile || !baseUrl || followLoading) return;
+  const {follow} = useFollow();
+  const {unFollow} = useUnfollow();
+;
+  // const handleFollowAction = async () => {
+  //   if (!profile || !baseUrl || followLoading) return;
 
     setFollowLoading(true);
     try {
