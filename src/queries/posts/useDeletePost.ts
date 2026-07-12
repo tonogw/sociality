@@ -5,6 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 
 export function useDeletePost() {
   return useMutation({
-    mutationFn: postService.deletePost,
+    mutationFn: (postId: number) => postService.deletePost(postId),
   });
 }

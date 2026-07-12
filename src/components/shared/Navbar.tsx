@@ -28,6 +28,7 @@ import {
 
 import { RootState, logout } from "@/store";
 import { userService } from "@/services/userService";
+import { meService } from "@/services/meService";
 import Logo from "@/components/shared/Logo";
 
 export default function Navbar() {
@@ -47,8 +48,8 @@ export default function Navbar() {
 
   // Fetch data user login
   const { data: profileData } = useQuery({
-    queryKey: ["user-profile", token],
-    queryFn: userService.getMe,
+    queryKey: ["user-profile"],
+    queryFn: meService.getMe,
     enabled: isLoggedIn,
   });
 

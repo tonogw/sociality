@@ -5,6 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 
 export function useUnlikePost() {
   return useMutation({
-    mutationFn: postService.unlikePost,
+    mutationFn: (postId: number) => postService.unlikePost(postId),
   });
 }

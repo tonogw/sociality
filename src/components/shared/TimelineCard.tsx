@@ -4,8 +4,17 @@ import { useState } from "react";
 import Image from "next/image";
 import { Heart, MessageSquare, Send, Bookmark, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { TimelineCardProps } from "@/types/post";
+
+import { useLikePost } from "@/queries/posts/useLikePost";
+import { useUnlikePost } from "@/queries/posts/useUnlikePost";
+
+import { useSavePost } from "@/queries/posts/useSavePost";
+import { useUnsavePost } from "@/queries/posts/useUnsavePost";
+
+import { useDeletePost } from "@/queries/posts/useDeletePost";
+import { useDeleteComment } from "@/queries/comments/useDeleteComment";
 
 // interface TimelineCardProps {
 //   post: {
@@ -45,78 +54,86 @@ export default function TimelineCard({
   // Batasan karakter untuk mengaktifkan tombol 'See More'
   const isLongCaption = post.caption && post.caption.length > 90;
 
-  // 1. MUTASI INTERAKSI API
-  const handleInteraction = async (
-    endpoint: string,
-    method: "POST" | "DELETE",
-  ) => {
-    const token = localStorage.getItem("token") || "";
-    const res = await fetch(`${baseUrl}${endpoint}`, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        accept: "application/json",
-      },
-    });
-    if (!res.ok) throw new Error("Gagal memproses aksi");
-    return res.json();
-  };
+  // // 1. MUTASI INTERAKSI API
+  // const handleInteraction = async (
+  //   endpoint: string,
+  //   method: "POST" | "DELETE",
+  // ) => {
+  //   const token = localStorage.getItem("token") || "";
+  //   const res = await fetch(`${baseUrl}${endpoint}`, {
+  //     method,
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //       accept: "application/json",
+  //     },
+  //   });
+  //   if (!res.ok) throw new Error("Gagal memproses aksi");
+  //   return res.json();
+  // };
 
   // Mutasi Like Post
-  const likeMutation = useMutation({
-    mutationFn: () =>
-      handleInteraction(`/posts/${post.id}/like`, isLiked ? "DELETE" : "POST"),
-    onMutate: () => {
-      // Optimistic UI update agar animasi pergantian warna instan tanpa nunggu server
-      setIsLiked(!isLiked);
-      setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
-    },
-    onError: () => {
-      // Rollback jika server error
-      setIsLiked(isLiked);
-      setLikesCount(post.likeCount ?? 0);
-      toast.error("Gagal menyukai postingan");
-    },
-  });
+  const likeMutation = useLikePost();
+  const unlikedMutation = useUnlikePost();
+
+  // useMutation({
+  //   mutationFn: () =>
+  //     handleInteraction(`/posts/${post.id}/like`, isLiked ? "DELETE" : "POST"),
+  //   onMutate: () => {
+  //     // Optimistic UI update agar animasi pergantian warna instan tanpa nunggu server
+  //     setIsLiked(!isLiked);
+  //     setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
+  //   },
+  //   onError: () => {
+  //     // Rollback jika server error
+  //     setIsLiked(isLiked);
+  //     setLikesCount(post.likeCount ?? 0);
+  //     toast.error("Gagal menyukai postingan");
+  //   },
+  // });
 
   // Mutasi Save / Bookmark Post
-  const saveMutation = useMutation({
-    mutationFn: () =>
-      handleInteraction(`/posts/${post.id}/save`, isSaved ? "DELETE" : "POST"),
-    onMutate: () => {
-      setIsSaved(!isSaved);
-    },
-    onSuccess: () => {
-      toast.success(isSaved ? "Saved to bookmarks" : "Removed from bookmarks");
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-    },
-    onError: () => {
-      setIsSaved(isSaved);
-      toast.error("Gagal menyimpan postingan");
-    },
-  });
+  const saveMutation = useSavePost();
+  const unsaveMutation = useUnsavePost();
+
+  // useMutation({
+  //   mutationFn: () =>
+  //     handleInteraction(`/posts/${post.id}/save`, isSaved ? "DELETE" : "POST"),
+  //   onMutate: () => {
+  //     setIsSaved(!isSaved);
+  //   },
+  //   onSuccess: () => {
+  //     toast.success(isSaved ? "Saved to bookmarks" : "Removed from bookmarks");
+  //     queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+  //   },
+  //   onError: () => {
+  //     setIsSaved(isSaved);
+  //     toast.error("Gagal menyimpan postingan");
+  //   },
+  // });
 
   // Mutasi Hapus Post Timeline
-  const deleteMutation = useMutation({
-    mutationFn: () => handleInteraction(`/posts/${post.id}`, "DELETE"),
-    onSuccess: () => {
-      toast.success("Post deleted successfully", {
-        style: {
-          background: "#D92D20",
-          color: "#FFFFFF",
-          borderRadius: "8px",
-          border: "none",
-        },
-      });
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["user-my-feed"] });
-    },
-    onError: () => toast.error("Failed to delete post"),
-  });
+  const deleteMutation = useDeletePost();
+  // useMutation({
+  //   mutationFn: () => handleInteraction(`/posts/${post.id}`, "DELETE"),
+  //   onSuccess: () => {
+  //     toast.success("Post deleted successfully", {
+  //       style: {
+  //         background: "#D92D20",
+  //         color: "#FFFFFF",
+  //         borderRadius: "8px",
+  //         border: "none",
+  //       },
+  //     });
+  //     queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+  //     queryClient.invalidateQueries({ queryKey: ["user-my-feed"] });
+  //   },
+  //   onError: () => toast.error("Failed to delete post"),
+  // });
 
   const handleDeleteTrigger = () => {
     if (window.confirm("Are you sure want to delete permanently?")) {
-      deleteMutation.mutate();
+      // deleteMutation.mutate();
+      deleteMutation.mutate(post.id);
     }
   };
 
@@ -183,7 +200,24 @@ export default function TimelineCard({
         <div className="flex flex-row items-center gap-4 h-7">
           {/* Tombol Likes */}
           <button
-            onClick={() => likeMutation.mutate()}
+            // onClick={() => likeMutation.mutate()}
+            onClick={() => {
+              if (isLiked) {
+                unlikedMutation.mutate(post.id, {
+                  onSuccess: () => {
+                    setIsLiked(false);
+                    setLikesCount((prev) => prev - 1);
+                  },
+                });
+              } else {
+                likeMutation.mutate(post.id, {
+                  onSuccess: () => {
+                    setIsLiked(true);
+                    setLikesCount((prev) => prev + 1);
+                  },
+                });
+              }
+            }}
             className="flex flex-row items-center gap-1.5 h-7 cursor-pointer text-white transition-transform active:scale-90"
           >
             <Heart
@@ -234,7 +268,18 @@ export default function TimelineCard({
 
         {/* Tombol Save / Bookmark Kanan */}
         <button
-          onClick={() => saveMutation.mutate()}
+          // onClick={() => saveMutation.mutate()}
+          onClick={() => {
+            if (isSaved) {
+              unsaveMutation.mutate(post.id, {
+                onSuccess: () => setIsSaved(false),
+              });
+            } else {
+              saveMutation.mutate(post.id, {
+                onSuccess: () => setIsSaved(true),
+              });
+            }
+          }}
           className="w-6 h-6 flex items-center justify-center cursor-pointer text-white transition-transform active:scale-95"
         >
           <Bookmark

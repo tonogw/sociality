@@ -1,5 +1,6 @@
 import { axiosInstance } from "@/lib/api/axios";
 import { Follow } from "@/types/follow";
+import { FetchPostsResponse, TimelineCardProps } from "@/types/post";
 // import { UpdateUserInput } from "@/lib/validations";
 import type {
   UserProfileData,
@@ -54,12 +55,34 @@ export const userService = {
 
   searchUsers: async (
     queryText: string,
-    page: number = 1,
+    page: number,
     limit: number = 20,
   ): Promise<SearchUsersResponse> => {
     const response = await axiosInstance.get(
       `/users/search?q=${encodeURIComponent(queryText)}&page=${page}&limit=${limit}`,
     );
     return response.data;
+  },
+
+  getUserPosts: async (
+    username: string,
+    page: number,
+    limit: number = 20,
+  ): Promise<FetchPostsResponse> => {
+    const response = await axiosInstance.get(
+      `/users/${username}/posts?page=${page}&limit=${limit}`,
+    );
+    return response.data.data;
+  },
+
+  getUserLikes: async (
+    username: string,
+    page: number,
+    limit: number = 20,
+  ): Promise<FetchPostsResponse> => {
+    const response = await axiosInstance.get(
+      `/users/${username}/likes?page=${page}&limit=${limit}`,
+    );
+    return response.data.data;
   },
 };

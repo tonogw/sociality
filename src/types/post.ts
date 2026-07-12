@@ -39,12 +39,12 @@ export interface TimelineCardProps {
 }
 
 export interface FetchPostsResponse {
-  success: boolean;
-  message: string;
-  data: {
-    posts: PostItem[];
-    pagination: Pagination;
-  };
+  // success: boolean;
+  // message: string;
+  // data: {
+  posts: PostItem[];
+  pagination: Pagination;
+  // };
 }
 
 export interface DeletePostResponse {

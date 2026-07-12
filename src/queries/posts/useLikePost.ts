@@ -5,6 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 
 export function useLikePost() {
   return useMutation({
-    mutationFn: postService.likePost,
+    mutationFn: (postId: number) => postService.likePost(postId),
   });
 }

@@ -1,3 +1,14 @@
+export * from "./api";
+export * from "./auth";
+export * from "./comment";
+export * from "./feed";
+export * from "./follow";
+export * from "./like";
+export * from "./me";
+export * from "./post";
+// export * from "./save";
+export * from "./user";
+
 // GET /api/me
 
 // curl -X 'PATCH' \
@@ -12,11 +23,11 @@
 //   -F 'avatar=@image-testi-kevin.png;type=image/png' \
 //   -F 'avatarUrl=https://picsum.com/200/300'
 
-export interface UpdataMyProfile {
-  success: string;
-  username: string;
-  phone: string;
-  bio: string;
-  avatar: string;
-  avatarUrl: string;
-}
+// export interface UpdataMyProfile {
+//   success: string;
+//   username: string;
+//   phone: string;
+//   bio: string;
+//   avatar: string;
+//   avatarUrl: string;
+// }

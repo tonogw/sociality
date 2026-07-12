@@ -5,6 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 
 export function useSavePost() {
   return useMutation({
-    mutationFn: postService.savePost,
+    mutationFn: (postId: number) => postService.savePost(postId),
   });
 }

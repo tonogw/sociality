@@ -5,6 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 
 export function useUnsavePost() {
   return useMutation({
-    mutationFn: postService.unsavePost,
+    mutationFn: (postId: number) => postService.unsavePost(postId),
   });
 }
