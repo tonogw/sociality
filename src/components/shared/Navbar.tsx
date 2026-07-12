@@ -6,8 +6,23 @@ import NavbarDefault from "./navbar/NavbarDefault";
 import NavbarProfile from "./navbar/NavbarProfile";
 import NavbarSearch from "./navbar/NavbarSearch";
 
+import { ROUTES } from "@/constants/routes";
+
+const SYSTEM_ROUTES = new Set([
+  ROUTES.HOME,
+  ROUTES.LOGIN,
+  ROUTES.REGISTER,
+  ROUTES.FEED,
+  ROUTES.SEARCH,
+  ROUTES.CREATE,
+  ROUTES.SAVED,
+  ROUTES.ME,
+]);
+
 export default function Navbar() {
   const pathname = usePathname();
+
+  console.log(pathname);
 
   if (pathname.startsWith("/search")) {
     return <NavbarSearch />;
@@ -17,11 +32,11 @@ export default function Navbar() {
     return <NavbarProfile title="My Profile" />;
   }
 
-  if (/^\/[^/]+$/.test(pathname)) {
-    const username = pathname.replace("/", "");
-
-    return <NavbarProfile title={username} />;
+  if (/^\/[^/]+$/.test(pathname) && !SYSTEM_ROUTES.has(pathname)) {
+    return <NavbarProfile title={pathname.slice(1)} />;
+    // const username = pathname.replace("/", "");
   }
+  // return <NavbarProfile title={username} />;
 
   return <NavbarDefault />;
 }

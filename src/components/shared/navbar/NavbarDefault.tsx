@@ -2,6 +2,7 @@
 
 import Logo from "@/components/shared/Logo";
 import { Search, Menu } from "lucide-react";
+import ProfileMenu from "./ProfileMenu";
 
 export default function NavbarDefault() {
   return (
@@ -13,9 +14,10 @@ export default function NavbarDefault() {
           <Search size={20} />
         </button>
 
-        <button className="cursor-pointer text-white">
+        <ProfileMenu />
+        {/* <button className="cursor-pointer text-white">
           <Menu size={24} />
-        </button>
+        </button> */}
       </div>
     </nav>
   );
