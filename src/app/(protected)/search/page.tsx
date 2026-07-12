@@ -1,17 +1,16 @@
-import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
-import SearchContent from "@/components/shared/SearchContent";
+"use client";
 
-export default function SearchBar() {
+import Navbar from "@/components/shared/Navbar";
+import SearchList from "@/components/shared/search/SearchList";
+
+export default function SearchPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="w-full h-screen bg-black flex items-center justify-center">
-          <Loader2 className="animate-spin text-[#6936F2]" size={32} />
-        </div>
-      }
-    >
-      <SearchContent />
-    </Suspense>
+    <div className="min-h-screen bg-black pt-16">
+      <Navbar />
+
+      <main className="mx-auto w-full max-w-[361px] px-4 py-4">
+        <SearchList />
+      </main>
+    </div>
   );
 }
