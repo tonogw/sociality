@@ -31,7 +31,17 @@ import { userService } from "@/services/userService";
 import { meService } from "@/services/meService";
 import Logo from "@/components/shared/Logo";
 
-export default function Navbar() {
+interface NavbarProps {
+  // showBack?: boolean;
+  variant?:"default"|"profile";
+  title?:string;
+}
+
+export default function Navbar({
+  showBack:false;
+  title?:string;
+}: NavbarProps) {
+
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -102,6 +112,9 @@ export default function Navbar() {
       }
     };
     return (
+      <header>
+
+      
       <nav className="fixed top-0 left-0 w-full h-16 bg-black border-b border-[#181D27] flex items-center justify-between px-4 z-50">
         <div className="flex items-center gap-2">
           <button
@@ -380,5 +393,6 @@ export default function Navbar() {
         )}
       </div>
     </nav>
+    </header>
   );
 }
