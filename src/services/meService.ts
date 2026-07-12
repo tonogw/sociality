@@ -11,12 +11,12 @@ import {
 
 export const meService = {
   getMe: async (): Promise<GetMyProfileResponse> => {
-    const response = await axiosInstance.get("/me");
+    const response = await axiosInstance.get("/my");
     return response.data;
   },
 
   updateMe: async (formData: FormData): Promise<UpdateMyProfileData> => {
-    const response = await axiosInstance.patch("/me", formData, {
+    const response = await axiosInstance.patch("/my", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
