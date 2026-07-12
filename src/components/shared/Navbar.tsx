@@ -8,7 +8,7 @@ import NavbarSearch from "./navbar/NavbarSearch";
 
 import { ROUTES } from "@/constants/routes";
 
-const SYSTEM_ROUTES = new Set([
+const SYSTEM_ROUTES = new Set<string>([
   ROUTES.HOME,
   ROUTES.LOGIN,
   ROUTES.REGISTER,
