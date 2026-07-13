@@ -41,34 +41,57 @@ export default function SearchList() {
       setLoading(true);
 
       try {
-        const res = await fetch(
-          `${baseUrl}/users/search?q=${encodeURIComponent(query)}&page=${initialPage}&limit=20`,
-          {
-            headers: {
-              accept: "application/json",
+        const startPage = initialPage > 1 ? initialPage - 1 : initialPage;
+
+        const requests = [];
+
+        requests.push(
+          fetch(
+            `${baseUrl}/users/search?q=${encodeURIComponent(query)}&page=${startPage}&limit=20`,
+            {
+              headers: {
+                accept: "application/json",
+              },
             },
-          },
+          ).then((r) => r.json()),
         );
 
-        const json = await res.json();
+        if (initialPage > startPage) {
+          requests.push(
+            fetch(
+              `${baseUrl}/users/search?q=${encodeURIComponent(query)}&page=${initialPage}&limit=20`,
+              {
+                headers: {
+                  accept: "application/json",
+                },
+              },
+            ).then((r) => r.json()),
+          );
+        }
+
+        const responses = await Promise.all(requests);
 
         if (cancelled) return;
 
-        const firstUsers = json.data.users ?? [];
+        let merged: SearchedUser[] = [];
 
-        setUsers(firstUsers);
+        responses.forEach((res) => {
+          merged = [...merged, ...(res.data.users ?? [])];
+        });
 
-        // setPage(initialPage);
+        merged = merged.filter(
+          (user, index, self) =>
+            self.findIndex((u) => u.id === user.id) === index,
+        );
 
-        setTopPage(initialPage);
+        setUsers(merged);
 
+        setTopPage(startPage);
         setBottomPage(initialPage);
 
-        setTotalPages(json.data.pagination.totalPages ?? 1);
-
-        // setUsers(json.data.users ?? []);
-        // setPage(1);
-        // setTotalPages(json.data.pagination.totalPages ?? 1);
+        setTotalPages(
+          responses[responses.length - 1].data.pagination.totalPages ?? 1,
+        );
       } catch (err) {
         console.error(err);
       } finally {
