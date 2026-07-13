@@ -41,57 +41,27 @@ export default function SearchList() {
       setLoading(true);
 
       try {
-        const startPage = initialPage > 1 ? initialPage - 1 : initialPage;
-
-        const requests = [];
-
-        requests.push(
-          fetch(
-            `${baseUrl}/users/search?q=${encodeURIComponent(query)}&page=${startPage}&limit=20`,
-            {
-              headers: {
-                accept: "application/json",
-              },
+        const res = await fetch(
+          `${baseUrl}/users/search?q=${encodeURIComponent(query)}&page=${initialPage}&limit=20`,
+          {
+            headers: {
+              accept: "application/json",
             },
-          ).then((r) => r.json()),
+          },
         );
 
-        if (initialPage > startPage) {
-          requests.push(
-            fetch(
-              `${baseUrl}/users/search?q=${encodeURIComponent(query)}&page=${initialPage}&limit=20`,
-              {
-                headers: {
-                  accept: "application/json",
-                },
-              },
-            ).then((r) => r.json()),
-          );
-        }
-
-        const responses = await Promise.all(requests);
+        const json = await res.json();
 
         if (cancelled) return;
 
-        let merged: SearchedUser[] = [];
+        const pageUsers: SearchedUser[] = json.data.users ?? [];
 
-        responses.forEach((res) => {
-          merged = [...merged, ...(res.data.users ?? [])];
-        });
+        setUsers(pageUsers);
 
-        merged = merged.filter(
-          (user, index, self) =>
-            self.findIndex((u) => u.id === user.id) === index,
-        );
-
-        setUsers(merged);
-
-        setTopPage(startPage);
+        setTopPage(initialPage);
         setBottomPage(initialPage);
 
-        setTotalPages(
-          responses[responses.length - 1].data.pagination.totalPages ?? 1,
-        );
+        setTotalPages(json.data.pagination.totalPages ?? 1);
       } catch (err) {
         console.error(err);
       } finally {
@@ -169,6 +139,8 @@ export default function SearchList() {
       try {
         const prevPage = topPage - 1;
 
+        const previousHeight = document.documentElement.scrollHeight;
+
         const res = await fetch(
           `${baseUrl}/users/search?q=${encodeURIComponent(query)}&page=${prevPage}&limit=20`,
           {
@@ -182,9 +154,25 @@ export default function SearchList() {
 
         const prevUsers: SearchedUser[] = json.data.users ?? [];
 
-        setUsers((current) => [...prevUsers, ...current]);
+        setUsers((current) => {
+          const merged = [...prevUsers, ...current];
+
+          return merged.filter(
+            (user, index, self) =>
+              self.findIndex((u) => u.id === user.id) === index,
+          );
+        });
 
         setTopPage(prevPage);
+
+        requestAnimationFrame(() => {
+          const currentHeight = document.documentElement.scrollHeight;
+
+          window.scrollTo({
+            top: currentHeight - previousHeight,
+            behavior: "instant",
+          });
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -232,7 +220,8 @@ export default function SearchList() {
           disabled={loadingMore}
           className="h-10 rounded-full border border-[#181D27] bg-[#0A0D12] text-xs text-white transition hover:bg-[#151922]"
         >
-          {loadingMore ? "Loading..." : `Load More (${users.length} users)`}
+          {/* {loadingMore ? "Loading..." : `Load More (${users.length} users)`} */}
+          {loadingMore ? "Loading..." : "Load More"}
         </button>
       )}
     </div>
