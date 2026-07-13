@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/create");
 
   if (isProtected && !token) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/posts", request.url));
   }
 
   return NextResponse.next();
