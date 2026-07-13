@@ -136,9 +136,7 @@ function FeedContent() {
                   >
                     {/* INFO PENULIS POST */}
                     <div
-                      onClick={() =>
-                        router.push(`/profile/${post.author.username}`)
-                      }
+                      onClick={() => router.push(`/${post.author.username}`)}
                       className="flex items-center gap-2.5 cursor-pointer group"
                     >
                       <div className="w-9 h-9 rounded-full bg-zinc-900 overflow-hidden relative border border-[#181D27]">
@@ -219,9 +217,7 @@ function FeedContent() {
                 {postsList.map((post) => (
                   <div
                     key={post.id}
-                    onClick={() =>
-                      router.push(`/profile/${post.author.username}`)
-                    }
+                    onClick={() => router.push(`/${post.author.username}`)}
                     className="w-full aspect-square bg-zinc-900 rounded-[2.66px] overflow-hidden relative border border-[#181D27]/40 group cursor-pointer"
                   >
                     {post.imageUrl ? (

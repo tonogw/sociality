@@ -1,26 +1,15 @@
+export * from "./api";
+export * from "./auth";
+export * from "./comment";
+export * from "./feed";
+export * from "./follow";
+export * from "./like";
+export * from "./me";
+export * from "./post";
+// export * from "./save";
+export * from "./user";
+
 // GET /api/me
-export interface GetMyProfileResponse {
-  success: boolean;
-  message: string;
-  data: {
-    profile: {
-      id: number;
-      name: string;
-      username: string;
-      email: string;
-      phone: string;
-      bio: string;
-      avatarUrl: string;
-      createdAt: string;
-    };
-    stats: {
-      posts: number;
-      followers: number;
-      following: number;
-      likes: number;
-    };
-  };
-}
 
 // curl -X 'PATCH' \
 //   'https://be-social-media-api-production.up.railway.app/api/me' \
@@ -34,86 +23,11 @@ export interface GetMyProfileResponse {
 //   -F 'avatar=@image-testi-kevin.png;type=image/png' \
 //   -F 'avatarUrl=https://picsum.com/200/300'
 
-export interface UpdataMyProfile {
-  success: string;
-  username: string;
-  phone: string;
-  bio: string;
-  avatar: string;
-  avatarUrl: string;
-}
-
-export interface UpdateMyProfileData {
-  success: boolean;
-  message: string;
-  data: {
-    id: number;
-    name: string;
-    username: string;
-    email: string;
-    phone: string;
-    bio: string;
-    avatarUrl: string;
-    updatedAt: string;
-  };
-}
-
-// https://be-social-media-api-production.up.railway.app/api/me/posts?page=1&limit=20
-export interface GetMyPostData {
-  success: boolean;
-  message: string;
-  data: {
-    items: [];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-  };
-}
-
-export interface SearchedUser {
-  id: number;
-  username: string;
-  name: string;
-  avatarUrl: string | null;
-  isFollowedByMe: boolean;
-}
-
-export interface SearchUsersResponse {
-  success: boolean;
-  message: string;
-  data: {
-    users: SearchedUser[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-  };
-}
-
-export interface UserProfileData {
-  id: number;
-  username: string;
-  name: string;
-  avatarUrl: string | null;
-  bio?: string;
-  email: string;
-  phone: string;
-  counts: {
-    post: number;
-    followers: number;
-    following: number;
-    likes: number;
-  };
-  isfollowing: boolean;
-  isMe: boolean;
-  postCount: number;
-  followersCount: number;
-  followingCount: number;
-  likesCount: number;
-  isFollowedByMe: boolean;
-}
+// export interface UpdataMyProfile {
+//   success: string;
+//   username: string;
+//   phone: string;
+//   bio: string;
+//   avatar: string;
+//   avatarUrl: string;
+// }

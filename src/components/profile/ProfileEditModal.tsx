@@ -76,6 +76,7 @@ export default function ProfileEditModal({
             </div>
 
             <input
+              id="change-image-file"
               hidden
               type="file"
               accept="image/png,image/jpeg,image/jpg"
@@ -94,6 +95,7 @@ export default function ProfileEditModal({
             <label className="text-xs font-bold">Name</label>
 
             <input
+              id="fullname"
               {...register("name")}
               className="w-full mt-1 h-11 rounded-xl border border-[#181D27] bg-[#0A0D12] px-4"
             />
@@ -107,6 +109,7 @@ export default function ProfileEditModal({
             <label className="text-xs font-bold">Username</label>
 
             <input
+              id="user-name"
               {...register("username")}
               className="w-full mt-1 h-11 rounded-xl border border-[#181D27] bg-[#0A0D12] px-4"
             />
@@ -122,6 +125,7 @@ export default function ProfileEditModal({
             <label className="text-xs font-bold">Phone</label>
 
             <input
+              id="phone"
               {...register("phone")}
               className="w-full mt-1 h-11 rounded-xl border border-[#181D27] bg-[#0A0D12] px-4"
             />

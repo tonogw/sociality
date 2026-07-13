@@ -1,17 +1,22 @@
+import { Pagination } from "./api";
+
 export interface PostItem {
   id: number;
   imageUrl: string;
   caption: string;
   createdAt: string;
-  author: {
-    id: number;
-    username: string;
-    name: string;
-    avatarUrl: string | null;
-  };
+  author: AuthorItem;
+
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+}
+
+export interface AuthorItem {
+  id: number;
+  username: string;
+  name: string;
+  avatarUrl: string | null;
 }
 
 export interface PostData {
@@ -24,16 +29,42 @@ export interface TimelineCardProps {
     imageUrl: string;
     caption?: string;
     createdAt: string;
-    author?: {
-      id: number;
-      username: string;
-      name: string;
-      avatarUrl: string | null;
-    };
+    author?: AuthorItem;
     likeCount?: number;
     commentCount?: number;
     likedByMe?: boolean;
     savedByMe?: boolean; // Mengantisipasi skema bookmark masa depan
   };
   currentUsername?: string; // Untuk pengecekan hak akses tombol hapus data post sendiri
+}
+
+export interface FetchPostsResponse {
+  // success: boolean;
+  // message: string;
+  // data: {
+  posts: PostItem[];
+  pagination: Pagination;
+  // };
+}
+
+export interface DeletePostResponse {
+  success: boolean;
+  message: string;
+  data: {
+    deleted: boolean;
+  };
+}
+
+export interface CreatePostResponse {
+  success: boolean;
+  message: string;
+  data: PostItem;
+}
+
+export interface PostResponse {
+  success: boolean;
+  message: string;
+  data: {
+    saved: boolean;
+  };
 }

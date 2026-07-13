@@ -1,74 +1,97 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 import { Loader2, Send, Grid, Heart } from "lucide-react";
 import Image from "next/image";
-import type { UserProfileData } from "@/types";
+// import type { FollowerUsers, UserProfileData } from "@/types/user";
+import { useFollow } from "@/queries/users/useFollow";
+import { useUser } from "@/queries/users/useUser";
+import { useUnfollow } from "@/queries/users/useUnfollow";
+import Navbar from "@/components/shared/Navbar";
+
+import ProfileTimeline from "@/components/profile/ProfileTimeline";
+import { useUserPosts } from "@/queries/users/useUserPosts";
+import { useUserLikes } from "@/queries/users/useUserLikes";
+// import { FetchPostsResponse, GetMyProfileResponse } from "@/types";
 
 function ProfileContent() {
   const params = useParams();
+
   //   const router = useRouter();
-  //   const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
   const username = params?.username as string;
-  //   const fromQuery = searchParams.get("fromQ") || "";
-  //   const lastPage = searchParams.get("lastPage") || "1";
+  const fromQuery = searchParams.get("fromQ") ?? "";
+  const lastPage = searchParams.get("lastPage") ?? "1";
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  const [profile, setProfile] = useState<UserProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // const [profile, setProfile] = useState<UserProfileData | null>(null);
+  // const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"gallery" | "liked">("gallery");
 
+  const { data: profile, isLoading } = useUser(username);
+  // const profile = data;
+  const { data: postsData, isLoading: postLoading } = useUserPosts(username);
+
+  const { data: likesData, isLoading: likesLoading } = useUserLikes(username);
+
+  const timelinePosts =
+    activeTab === "gallery"
+      ? (postsData?.posts ?? [])
+      : (likesData?.posts ?? []);
+
+  console.log("postsData", postsData);
+  console.log("timelinePosts", timelinePosts);
+
+  const timelineLoading = activeTab === "gallery" ? postLoading : likesLoading;
   // Fetch profile public data from backend server
-  useEffect(() => {
-    if (!username || !baseUrl) return;
+  // useEffect(() => {
+  //   if (!username || !baseUrl) return;
 
-    const fetchUserProfile = async () => {
-      try {
-        // Menggunakan rute dinamis backend yang sesuai
-        const token = localStorage.getItem("token") || "";
-        const res = await fetch(`${baseUrl}/users/${username}`, {
-          method: "GET",
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  // const fetchUserProfile = async () => {
+  //   try {
+  //     // Menggunakan rute dinamis backend yang sesuai
+  //     const token = localStorage.getItem("token") || "";
+  //     const res = await fetch(`${baseUrl}/users/${username}`, {
+  //       method: "GET",
+  //       headers: {
+  //         accept: "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
 
-        if (!res.ok) throw new Error("Profile not found");
-        const json = await res.json();
+  // if (!res.ok) throw new Error("Profile not found");
+  // const json = await res.json();
 
-        // Sesuaikan dengan mapping struktur response API Anda
-        if (json?.success && json?.data) {
-          setProfile(json.data);
-        }
-        //  else {
-        //   // Fallback mockup jika API detail profil Anda menggunakan skema berbeda
-        //   setProfile({
-        //     id: Math.random(),
-        //     username: username,
-        //     name: username.toUpperCase(),
-        //     avatarUrl: null,
-        //     bio: "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!",
-        //     postCount: 50,
-        //     followersCount: 100,
-        //     followingCount: 43,
-        //     likesCount: 567,
-        //     isFollowedByMe: false,
-        //   });
-        // }
-      } catch (err) {
-        console.error("Gagal menarik data profil:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // // Sesuaikan dengan mapping struktur response API Anda
+  // if (json?.success && json?.data) {
+  //   setProfile(json.data);
+  // }
+  //  else {
+  //   // Fallback mockup jika API detail profil Anda menggunakan skema berbeda
+  //   setProfile({
+  //     id: Math.random(),
+  //     username: username,
+  //     name: username.toUpperCase(),
+  //     avatarUrl: null,
+  //     bio: "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!",
+  //     postCount: 50,
+  //     followersCount: 100,
+  //     followingCount: 43,
+  //     likesCount: 567,
+  //     isFollowedByMe: false,
+  //   });
+  // }
+  //   } catch (err) {
+  //     console.error("Gagal menarik data profil:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-    fetchUserProfile();
-  }, [username, baseUrl]);
+  //   fetchUserProfile();
+  // }, [username, baseUrl]);
 
   //   const handleBackNavigation = () => {
   //     if (fromQuery) {
@@ -79,58 +102,70 @@ function ProfileContent() {
   //       router.push("/feed");
   //     }
   //   };
+  // const followMutation.mutateAsync(username);
+  const followMutation = useFollow();
+  const unFollowMutation = useUnfollow();
 
   const handleFollowAction = async () => {
-    if (!profile || !baseUrl || followLoading) return;
-
+    //   if (!profile || !baseUrl || followLoading) return;
+    if (!profile || followLoading) return;
     setFollowLoading(true);
     try {
-      const token = localStorage.getItem("token") || "";
-      // Fetch api follow
-      const res = await fetch(`${baseUrl}/follow/${username}`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: "", // as params -d '' at CURL
-      });
-
-      if (!res.ok) throw new Error("Failed change to follow status");
-      const json = await res.json();
-
-      if (json?.success) {
-        // get following new status from backend server
-        const isNowFollowing = json?.data?.following;
-
-        setProfile((prev) => {
-          if (!prev) return null;
-
-          const currentFollowers = Number(
-            prev.counts.followers ??
-              //   prev.followers ??
-              //   prev._count?.followers ??
-              0,
-          );
-
-          return {
-            ...prev,
-            isFollowedByMe: isNowFollowing,
-            // Update total follow
-            followersCount: isNowFollowing
-              ? currentFollowers + 1
-              : Math.max(0, currentFollowers - 1),
-            //   ? prev.followersCount + 1
-            //   : prev.followersCount - 1,
-          };
-        });
+      if (profile.isFollowing) {
+        await unFollowMutation.mutateAsync(username);
+      } else {
+        await followMutation.mutateAsync(username);
       }
-    } catch (err) {
-      console.error("Follow error:", err);
     } finally {
       setFollowLoading(false);
     }
   };
+  //   const token = localStorage.getItem("token") || "";
+  //   // Fetch api follow
+  //   const res = await fetch(`${baseUrl}/follow/${username}`, {
+  //     method: "POST",
+  //     headers: {
+  //       accept: "application/json",
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //     body: "", // as params -d '' at CURL
+  //   });
+
+  // if (!res.ok) throw new Error("Failed change to follow status");
+  // const json = await res.json();
+
+  // if (json?.success) {
+  //   // get following new status from backend server
+  //   const isNowFollowing = json?.data?.following;
+
+  //   setProfile((prev) => {
+  //     if (!prev) return null;
+
+  //     const currentFollowers = Number(
+  //       prev.counts.followers ??
+  //         //   prev.followers ??
+  //         //   prev._count?.followers ??
+  //         0,
+  //     );
+
+  //         return {
+  //           ...prev,
+  //           isFollowedByMe: isNowFollowing,
+  //           // Update total follow
+  //           followersCount: isNowFollowing
+  //             ? currentFollowers + 1
+  //             : Math.max(0, currentFollowers - 1),
+  //           //   ? prev.followersCount + 1
+  //           //   : prev.followersCount - 1,
+  //         };
+  //       });
+  //     }
+  //   } catch (err) {
+  //     console.error("Follow error:", err);
+  //   } finally {
+  //     setFollowLoading(false);
+  //   }
+  // };
 
   //   ArrowLeft button
   //   const handleBackNavigation = () => {
@@ -147,7 +182,7 @@ function ProfileContent() {
   //     alert(`Open gallery to post new timeline to your profile @${username}`);
   //   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center gap-2 text-white">
         <Loader2 className="animate-spin text-[#6936F2]" size={28} />
@@ -162,7 +197,8 @@ function ProfileContent() {
   //   const render
 
   return (
-    <div className="w-full min-h-screen bg-black text-white px-4 pt-6 pb-24 flex flex-col items-center font-sans">
+    <div className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-24 flex flex-col items-center font-sans">
+      <Navbar fromQuery={fromQuery} lastPage={lastPage} />
       <div className="w-full max-w-90.25 flex flex-col gap-4">
         {/* HEADER NAVIGATION (BARIS ATAS FIGMA) */}
         <div className="flex items-center justify-between w-full border-b border-[#181D27] pb-3">
@@ -218,14 +254,14 @@ function ProfileContent() {
             onClick={handleFollowAction}
             disabled={followLoading}
             className={`flex-1 h-full rounded-full text-sm font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              profile?.isFollowedByMe
+              profile?.isFollowing
                 ? "bg-[#181D27] border border-zinc-800"
                 : "bg-[#6936F2] hover:bg-[#582cd1]"
             }`}
           >
             {followLoading ? (
               <Loader2 className="animate-spin" size={16} />
-            ) : profile?.counts.following ? (
+            ) : profile?.isFollowing ? (
               "Following"
             ) : (
               "Follow"
@@ -313,19 +349,11 @@ function ProfileContent() {
         </div>
 
         {/* IMAGES MOCKUP LAYOUT (DIMENSI: 119.15px x 119.15px GAP: 1.78px FIGMA) */}
-        <div className="grid grid-cols-3 gap-[1.78px] w-full mt-2">
-          {Array.from({ length: 9 }).map((_, index) => (
-            <div
-              key={index}
-              className="w-full aspect-square bg-zinc-900 rounded-[2.66px] overflow-hidden relative group cursor-pointer border border-[#181D27]/40"
-            >
-              {/* Dummy Image asset placeholder */}
-              <div className="w-full h-full bg-linear-to-b from-zinc-800 to-zinc-900 flex items-center justify-center text-[10px] text-zinc-600">
-                Post {index + 1}
-              </div>
-            </div>
-          ))}
-        </div>
+        <ProfileTimeline
+          posts={timelinePosts}
+          currentUsername={username}
+          isLoading={timelineLoading}
+        />
       </div>
     </div>
   );
