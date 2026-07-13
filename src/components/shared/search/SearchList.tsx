@@ -60,6 +60,7 @@ export default function SearchList() {
 
         setTopPage(initialPage);
         setBottomPage(initialPage);
+        console.log(json);
 
         setTotalPages(json.data.pagination.totalPages ?? 1);
       } catch (err) {

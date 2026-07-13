@@ -8,6 +8,11 @@ import NavbarSearch from "./navbar/NavbarSearch";
 
 import { ROUTES } from "@/constants/routes";
 
+interface NavbarProps {
+  fromQuery?: string;
+  lastPage: string;
+}
+
 const SYSTEM_ROUTES = new Set<string>([
   ROUTES.HOME,
   ROUTES.LOGIN,
@@ -19,7 +24,7 @@ const SYSTEM_ROUTES = new Set<string>([
   ROUTES.ME,
 ]);
 
-export default function Navbar() {
+export default function Navbar({ fromQuery, lastPage }: NavbarProps) {
   const pathname = usePathname();
 
   console.log(pathname);
@@ -33,7 +38,13 @@ export default function Navbar() {
   }
 
   if (/^\/[^/]+$/.test(pathname) && !SYSTEM_ROUTES.has(pathname)) {
-    return <NavbarProfile title={pathname.slice(1)} />;
+    return (
+      <NavbarProfile
+        title={pathname.slice(1)}
+        fromQuery={fromQuery}
+        lastPage={lastPage}
+      />
+    );
     // const username = pathname.replace("/", "");
   }
   // return <NavbarProfile title={username} />;

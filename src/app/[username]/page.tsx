@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { Loader2, Send, Grid, Heart } from "lucide-react";
 import Image from "next/image";
@@ -18,12 +18,13 @@ import { FetchPostsResponse, GetMyProfileResponse } from "@/types";
 
 function ProfileContent() {
   const params = useParams();
+
   //   const router = useRouter();
-  //   const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
   const username = params?.username as string;
-  //   const fromQuery = searchParams.get("fromQ") || "";
-  //   const lastPage = searchParams.get("lastPage") || "1";
+  const fromQuery = searchParams.get("fromQ") ?? "";
+  const lastPage = searchParams.get("lastPage") ?? "1";
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -200,7 +201,7 @@ function ProfileContent() {
 
   return (
     <div className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-24 flex flex-col items-center font-sans">
-      <Navbar />
+      <Navbar fromQuery={fromQuery} lastPage={lastPage} />
       <div className="w-full max-w-90.25 flex flex-col gap-4">
         {/* HEADER NAVIGATION (BARIS ATAS FIGMA) */}
         <div className="flex items-center justify-between w-full border-b border-[#181D27] pb-3">
