@@ -21,11 +21,17 @@ export default function NavbarSearch() {
   };
 
   const handleClose = () => {
+    if (window.history.length > 1) {
+      router.back();
+
+      return;
+    }
+
     router.replace("/posts");
   };
 
   return (
-    <nav className="fixed top-0 left-1/2 -translate-x-1/2 z-50 flex h-16 max-w-98.25 items-center gap-3 border-b border-[#181D27] bg-black">
+    <nav className="fixed w-full px-4 top-0 left-1/2 -translate-x-1/2 z-50 flex h-16 max-w-98.25 items-center gap-3 border-b border-[#181D27] bg-black">
       <SearchBar
         value={keyword}
         onChange={setKeyword}
