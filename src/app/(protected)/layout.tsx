@@ -6,6 +6,13 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  if (!token) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       <Suspense fallback={null}>
