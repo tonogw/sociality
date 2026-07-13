@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 export default function NavbarDefault() {
   const router = useRouter();
   return (
-    <nav className="fixed top-0 left-0 z-50 flex h-16 w-full items-center justify-between border-b border-[#181D27] bg-black px-4">
+    <nav className="fixed top-0 left-1/2 -translate-x-1/2 z-50 flex h-16 max-w-98.25 items-center justify-between border-b border-[#181D27] bg-black">
       <Logo />
 
       <div className="flex items-center gap-4">

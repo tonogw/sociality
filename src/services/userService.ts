@@ -64,6 +64,16 @@ export const userService = {
     return response.data;
   },
 
+  // searchUsers: async (keyword: string) => {
+  //   const response = await axiosInstance.get("/users/search", {
+  //     params: {
+  //       q: keyword,
+  //     },
+  //   });
+
+  //   return response.data;
+  // },
+
   getUserPosts: async (
     username: string,
     page: number,
