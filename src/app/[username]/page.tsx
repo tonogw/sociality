@@ -1,20 +1,19 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { Loader2, Send, Grid, Heart } from "lucide-react";
 import Image from "next/image";
-import type { FollowerUsers, UserProfileData } from "@/types/user";
+// import type { FollowerUsers, UserProfileData } from "@/types/user";
 import { useFollow } from "@/queries/users/useFollow";
 import { useUser } from "@/queries/users/useUser";
 import { useUnfollow } from "@/queries/users/useUnfollow";
 import Navbar from "@/components/shared/Navbar";
-import { Button } from "@base-ui/react";
 
 import ProfileTimeline from "@/components/profile/ProfileTimeline";
 import { useUserPosts } from "@/queries/users/useUserPosts";
 import { useUserLikes } from "@/queries/users/useUserLikes";
-import { FetchPostsResponse, GetMyProfileResponse } from "@/types";
+// import { FetchPostsResponse, GetMyProfileResponse } from "@/types";
 
 function ProfileContent() {
   const params = useParams();

@@ -10,7 +10,7 @@ import { ROUTES } from "@/constants/routes";
 
 interface NavbarProps {
   fromQuery?: string;
-  lastPage: string;
+  lastPage?: string;
 }
 
 const SYSTEM_ROUTES = new Set<string>([
