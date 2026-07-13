@@ -25,9 +25,18 @@ export const authSlice = createSlice({
     setToken: (state, action: PayloadAction<string | null>) => {
       state.token = action.payload;
     },
+    // logout: (state) => {
+    //   state.token = null;
+    //   if (typeof window !== "undefined") localStorage.removeItem("token");
+    // },
     logout: (state) => {
       state.token = null;
-      if (typeof window !== "undefined") localStorage.removeItem("token");
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+
+        document.cookie = "token=; Path=/; Max-Age=0; SameSite=Lax";
+      }
     },
   },
 });

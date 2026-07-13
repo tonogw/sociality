@@ -1,6 +1,6 @@
 import { axiosInstance } from "@/lib/api/axios";
 import { Follow } from "@/types/follow";
-import { FetchPostsResponse, TimelineCardProps } from "@/types/post";
+import { FetchPostsResponse } from "@/types/post";
 // import { UpdateUserInput } from "@/lib/validations";
 import type {
   UserProfileData,

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Heart, MessageSquare, Send, Bookmark, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import type { TimelineCardProps } from "@/types/post";
 
 import { useLikePost } from "@/queries/posts/useLikePost";
@@ -14,7 +14,7 @@ import { useSavePost } from "@/queries/posts/useSavePost";
 import { useUnsavePost } from "@/queries/posts/useUnsavePost";
 
 import { useDeletePost } from "@/queries/posts/useDeletePost";
-import { useDeleteComment } from "@/queries/comments/useDeleteComment";
+// import { useDeleteComment } from "@/queries/comments/useDeleteComment";
 
 // interface TimelineCardProps {
 //   post: {
@@ -40,9 +40,6 @@ export default function TimelineCard({
   post,
   currentUsername,
 }: TimelineCardProps) {
-  const queryClient = useQueryClient();
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
   // State untuk interaksi instan (Optimistic UI state)
   const [isLiked, setIsLiked] = useState(post.likedByMe ?? false);
   const [likesCount, setLikesCount] = useState(post.likeCount ?? 0);
@@ -138,7 +135,7 @@ export default function TimelineCard({
   };
 
   return (
-    <div className="w-full max-w-[361px] bg-[#0A0D12] border border-[#181D27] rounded-2xl overflow-hidden flex flex-col gap-3 font-sans animate-fade-in mx-auto">
+    <div className="w-full max-w-90.25 bg-[#0A0D12] border border-[#181D27] rounded-2xl overflow-hidden flex flex-col gap-3 font-sans animate-fade-in mx-auto">
       {/* 1. TOP BAR POST: AVATAR & USERNAME */}
       <div className="w-full flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -153,7 +150,7 @@ export default function TimelineCard({
                 sizes="32px"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-[10px] font-bold text-white">
+              <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-[10px] font-bold text-white">
                 {post.author?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}

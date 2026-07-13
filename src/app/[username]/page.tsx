@@ -25,8 +25,6 @@ function ProfileContent() {
   const fromQuery = searchParams.get("fromQ") ?? "";
   const lastPage = searchParams.get("lastPage") ?? "1";
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
   // const [profile, setProfile] = useState<UserProfileData | null>(null);
   // const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);

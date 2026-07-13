@@ -1,7 +1,7 @@
 "use client";
 
 import Logo from "@/components/shared/Logo";
-import { Search, Menu } from "lucide-react";
+import { Search } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import { ROUTES } from "@/constants/routes";
 import { useRouter } from "next/navigation";

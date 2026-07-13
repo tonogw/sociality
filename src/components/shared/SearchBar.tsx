@@ -17,6 +17,7 @@ export default function SearchBar({
   placeholder = "Search username...",
   className = "",
 }: SearchBarProps) {
+  console.count("SearchBar rendered");
   return (
     <div
       className={`
@@ -30,6 +31,7 @@ export default function SearchBar({
       />
 
       <input
+        id="keyword"
         autoFocus
         value={value}
         onChange={(e) => onChange(e.target.value)}

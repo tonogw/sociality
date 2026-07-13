@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet";
 
 import { logout } from "@/store";
+
 import { useMe } from "@/queries/me/useGetMe";
 
 export default function ProfileMenu() {
@@ -32,7 +33,7 @@ export default function ProfileMenu() {
   const handleLogout = () => {
     dispatch(logout());
     setOpen(false);
-    router.push("/login");
+    router.replace("/login");
   };
 
   return (

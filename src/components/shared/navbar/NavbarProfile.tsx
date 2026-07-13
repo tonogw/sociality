@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 
@@ -17,7 +17,6 @@ export default function NavbarProfile({
   lastPage,
 }: NavbarProfileProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const handleBack = () => {
     // const fromQ = searchParams.get("fromQ");
