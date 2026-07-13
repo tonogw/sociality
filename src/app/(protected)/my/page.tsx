@@ -10,7 +10,6 @@ import { AxiosError } from "axios";
 
 import { useRouter } from "next/navigation";
 import { updateProfileSchema, type UpdateUserInput } from "@/validations/auth";
-import { userService } from "@/services/userService";
 import ImageCropUploader from "@/components/shared/ImageCropUploader";
 
 import ProfileHeader from "@/components/profile/ProfileHeader";
@@ -22,6 +21,7 @@ import ProfileEmptyState from "@/components/profile/ProfileEmptyState";
 import ProfileSavedGallery from "@/components/profile/ProfileSavedGallery";
 import ProfileEditModal from "@/components/profile/ProfileEditModal";
 import BottomNavbar from "@/components/shared/BottomNavbar";
+import { meService } from "@/services/meService";
 
 interface ApiErrorResponse {
   message?: string;
@@ -69,7 +69,7 @@ export default function MyProfilePage() {
 
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["user-profile"],
-    queryFn: userService.getMe,
+    queryFn: meService.getMe,
   });
 
   const { data: feedData } = useQuery({
@@ -122,7 +122,7 @@ export default function MyProfilePage() {
   }, [user, reset]);
 
   const mutation = useMutation({
-    mutationFn: userService.updateMe,
+    mutationFn: meService.updateMe,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       toast.success("Profile updated successfully", {
@@ -222,7 +222,7 @@ export default function MyProfilePage() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-[361px] flex flex-col gap-4">
+      <div className="w-full max-w-90.25 flex flex-col gap-4">
         {/* INFO USER */}
 
         <ProfileHeader
@@ -235,7 +235,7 @@ export default function MyProfilePage() {
         <OwnerActions onEditProfile={() => setIsModalOpen(true)} />
 
         {/* BIO TEXT */}
-        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-word">
           {user?.bio ||
             "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!"}
         </p>
