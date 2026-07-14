@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 
 import { updateProfileSchema, type UpdateUserInput } from "@/validations/auth";
 
-// Impor komponen modular asli dari struktur proyek lokal Anda
 import ImageCropUploader from "@/components/shared/ImageCropUploader";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
@@ -51,17 +50,15 @@ export default function MyProfilePage() {
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // State Kontrol Modal & Uploader Modul
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  // const [isAvatarCropOpen, setIsAvatarCropOpen] = useState(false); // Modul Crop Avatar Baru
+  const [isAvatarCropOpen, setIsAvatarCropOpen] = useState(false);
 
   const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
     null,
   );
   const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
 
-  // 1. QUERY CORE DATA PROFIL SAYA
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: meService.getMe,
@@ -95,7 +92,6 @@ export default function MyProfilePage() {
     user?.posts && user.posts.length > 0 ? user.posts : backupPost;
   const savedPosts = user?.saved || [];
 
-  // 2. FORM CONFIGURATION
   const {
     register,
     handleSubmit,
@@ -118,7 +114,6 @@ export default function MyProfilePage() {
     }
   }, [user, reset]);
 
-  // 3. MUTATION: UPDATE PROFILE (INFO + AVATAR BARU)
   const mutation = useMutation({
     mutationFn: meService.updateMe,
     onSuccess: async () => {
@@ -142,22 +137,23 @@ export default function MyProfilePage() {
     },
   });
 
-  // Handler Pemicu Pemotongan Avatar dari Modal Edit
-  // const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = e.target.files?.[0];
-  //   if (file) {
-  //     // Buka penampung crop image modular untuk avatar
-  //     setIsAvatarCropOpen(true);
-  //   }
-  // };
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsAvatarCropOpen(true);
+    }
+  };
 
-  // Menerima hasil potongan gambar dari ImageCropUploader khusus Avatar
-  // const handleAvatarCropped = (croppedFile: File) => {
-  //   setSelectedAvatarFile(croppedFile);
-  //   setPreviewAvatarUrl(URL.createObjectURL(croppedFile));
-  //   setIsAvatarCropOpen(false);
-  //   toast.info("Avatar image cropped successfully!");
-  // };
+  // FIX TYPE ERROR: Mengubah fungsi menjadi async Promise<void> agar lolos validasi tipe onUpload
+  const handleAvatarCropped = async (
+    croppedFile: File,
+    // caption?: string,
+  ): Promise<void> => {
+    setSelectedAvatarFile(croppedFile);
+    setPreviewAvatarUrl(URL.createObjectURL(croppedFile));
+    setIsAvatarCropOpen(false);
+    toast.info("Avatar image cropped successfully!");
+  };
 
   const onSubmit = (data: UpdateUserInput) => {
     const formData = new FormData();
@@ -167,14 +163,12 @@ export default function MyProfilePage() {
     if (data.bio) formData.append("bio", data.bio);
     if (data.avatarUrl) formData.append("avatarUrl", data.avatarUrl);
 
-    // Pasangkan file avatar hasil crop ke payload form data jika ada
     if (selectedAvatarFile) {
       formData.append("avatar", selectedAvatarFile);
     }
     mutation.mutate(formData);
   };
 
-  // 4. HANDLER: CREATE POST & SUBSEQUENT FETCH AUTOMATION
   const handleCreatePost = async (croppedFile: File, caption?: string) => {
     try {
       const token = localStorage.getItem("token") || "";
@@ -287,15 +281,14 @@ export default function MyProfilePage() {
         </div>
       </div>
 
-      {/* FIXED BOTTOM NAV BAR (HOME MENGARAH KONSISTEN KE /posts) */}
+      {/* FIX ROUTING HOME KEMBALI KE /feed KARENA RUMAHNYA AKAN KITA BANGUN */}
       <BottomNavbar
-        onHome={() => router.push("/posts")}
+        onHome={() => router.push("/feed")}
         onCreatePost={() => setIsCreatePostOpen(true)}
         onProfile={() => router.push("/my")}
         avatarUrl={user?.avatarUrl}
       />
 
-      {/* MODUL UPLOADER 1: BUAT POSTINGAN BARU */}
       <ImageCropUploader
         isOpen={isCreatePostOpen}
         onClose={() => setIsCreatePostOpen(false)}
@@ -303,15 +296,13 @@ export default function MyProfilePage() {
         isUploading={false}
       />
 
-      {/* MODUL UPLOADER 2: PROSES PEMOTONGAN/CROP AVATAR BARU */}
-      {/* <ImageCropUploader
+      <ImageCropUploader
         isOpen={isAvatarCropOpen}
         onClose={() => setIsAvatarCropOpen(false)}
-        // onUpload={handleAvatarCropped}
+        onUpload={handleAvatarCropped}
         isUploading={false}
-      /> */}
+      />
 
-      {/* MODAL WINDOWS EDIT PROFILE */}
       <ProfileEditModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
