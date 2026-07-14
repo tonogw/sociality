@@ -123,10 +123,10 @@ function FeedContent() {
 
   return (
     <div className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-28 flex flex-col items-center font-sans">
-      <div className="w-full max-w-[361px] flex flex-col gap-4">
+      <div className="w-full max-w-90.25 flex flex-col gap-4">
         {/* HEADER BRAND & LAYOUT SWITCHER */}
         <div className="w-full border-b border-[#181D27] pb-3 mb-2 flex items-center justify-between">
-          <h1 className="text-xl font-black tracking-tight bg-gradient-to-r from-[#6936F2] to-[#AD3AE7] bg-clip-text text-transparent">
+          <h1 className="text-xl font-black tracking-tight bg-linear-to-r from-[#6936F2] to-[#AD3AE7] bg-clip-text text-transparent">
             Sociality Feed
           </h1>
 
@@ -163,7 +163,7 @@ function FeedContent() {
             <h3 className="text-sm font-bold text-[#FDFDFD]">
               Belum Ada Postingan
             </h3>
-            <p className="text-xs text-[#A4A7AE] mt-1 max-w-[240px]">
+            <p className="text-xs text-[#A4A7AE] mt-1 max-w-60">
               Gunakan pintasan upload di halaman profil untuk mengunggah gambar
               pertama Anda!
             </p>
@@ -193,7 +193,11 @@ function FeedContent() {
                 {postsList.map((post, index) => (
                   <div
                     key={`${post.id}-grid-${index}`}
-                    onClick={() => router.push(`/${post.author.username}`)}
+                    onClick={() =>
+                      router.push(
+                        `/${post.author?.username || ""}?postId=${post.id} }`,
+                      )
+                    }
                     className="w-full aspect-square bg-zinc-900 rounded-[2.66px] overflow-hidden relative border border-[#181D27]/40 group cursor-pointer"
                   >
                     {post.imageUrl ? (

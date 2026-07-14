@@ -1,33 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { Heart, MessageSquare, Send, Bookmark, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import type { TimelineCardProps } from "@/types/post";
+import { useQueryClient } from "@tanstack/react-query";
+import type { PostItem } from "@/types/post";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
-// Import custom mutation hooks untuk interaksi instan
+// Import kueri mutasi interaktif dari pustaka kueri Anda
 import { useLikePost } from "@/queries/posts/useLikePost";
 import { useUnlikePost } from "@/queries/posts/useUnlikePost";
 import { useSavePost } from "@/queries/posts/useSavePost";
 import { useUnsavePost } from "@/queries/posts/useUnsavePost";
 import { useDeletePost } from "@/queries/posts/useDeletePost";
 
+interface TimelineCardProps {
+  post: PostItem;
+  canDelete?: boolean;
+  currentUsername?: string;
+}
+
 export default function TimelineCard({
   post,
   canDelete,
   currentUsername,
 }: TimelineCardProps) {
-  // Optimistic UI States
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
   const [isLiked, setIsLiked] = useState(post.likedByMe ?? false);
   const [likesCount, setLikesCount] = useState(post.likeCount ?? 0);
   const [isSaved, setIsSaved] = useState(post.savedByMe ?? false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isLongCaption = post.caption && post.caption.length > 90;
-  const router = useRouter();
 
   // React Query Mutations
   const likeMutation = useLikePost();
@@ -44,27 +51,53 @@ export default function TimelineCard({
     }
   };
 
+  const handleBookmarkToggle = () => {
+    if (isSaved) {
+      unsaveMutation.mutate(post.id, {
+        onSuccess: async () => {
+          setIsSaved(false);
+          toast.success("Removed from saved posts");
+          await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+          await queryClient.invalidateQueries({ queryKey: ["my-feed"] });
+        },
+      });
+    } else {
+      saveMutation.mutate(post.id, {
+        onSuccess: async () => {
+          setIsSaved(true);
+          toast.success("Post saved successfully!");
+          await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+          await queryClient.invalidateQueries({ queryKey: ["my-feed"] });
+        },
+      });
+    }
+  };
+
   return (
-    <div className="w-full max-w-[361px] bg-[#0A0D12]/20 border-b border-[#181D27] pb-6 flex flex-col gap-3 font-sans animate-fade-in mx-auto">
-      {/* 1. TOP BAR POST: AVATAR & USERNAME (KLIK -> PROFILE) */}
+    <div
+      id={`post-${post.id}`}
+      className="w-full max-w-90.25 bg-[#0A0D12]/20 border-b border-[#181D27] pb-6 flex flex-col gap-3 font-sans animate-fade-in mx-auto"
+    >
+      {/* 1. TOP BAR: AUTHOR PROFILE INFORMATION */}
       <div className="w-full flex items-center justify-between px-1">
-        <Link
-          href={`/${post.author?.username || ""}`}
-          className="flex items-center gap-2.5 group cursor-pointer"
+        <button
+          onClick={() =>
+            router.push(`/${post.author?.username || ""}?postId=${post.id}`)
+          }
+          className="flex items-center gap-2.5 group cursor-pointer text-left"
         >
-          {/* Avatar bulat tanpa border kaku sesuai Figma */}
           <div className="w-9 h-9 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center relative shrink-0">
             {post.author?.avatarUrl ? (
               <Image
                 src={post.author.avatarUrl}
                 alt="Author avatar"
-                fill
-                className="object-cover"
+                width={36}
+                height={36}
                 unoptimized
-                sizes="36px"
+                className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xs font-bold text-white">
+              <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xs font-bold text-white">
                 {post.author?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}
@@ -79,7 +112,7 @@ export default function TimelineCard({
                 : "1 Minutes Ago"}
             </span>
           </div>
-        </Link>
+        </button>
 
         {/* Tombol Hapus Kiriman Pribadi */}
         {(canDelete || post.author?.username === currentUsername) && (
@@ -92,23 +125,27 @@ export default function TimelineCard({
         )}
       </div>
 
-      {/* 2. IMAGE POST AREA (Square 1:1, Rounded 12px Lembut sesuai Figma) */}
-      <div className="w-full aspect-square relative bg-zinc-950 rounded-2xl overflow-hidden border border-[#181D27]">
+      {/* 2. IMAGE CONTENT AREA */}
+      <div
+        onClick={() =>
+          router.push(`/${post.author?.username || ""}?postId=${post.id}`)
+        }
+        className="w-full aspect-square relative bg-zinc-950 rounded-2xl overflow-hidden border border-[#181D27] cursor-pointer hover:opacity-95 transition-opacity"
+      >
         <Image
           src={post.imageUrl || "/placeholder.png"}
           alt="Post media display"
-          fill
-          className="object-cover"
+          width={361}
+          height={361}
           unoptimized
-          sizes="361px"
-          priority
+          className="w-full h-full object-cover"
         />
       </div>
 
-      {/* 3. INTERACTIVE INTERFACE FRAME (Presisi "Screenshot 2026-07-09 at 19.29.47.png") */}
+      {/* 3. INTERACTIVE ACTIONS FRAME PANEL */}
       <div className="flex flex-row justify-between items-center w-full h-7 px-1">
         <div className="flex flex-row items-center gap-4">
-          {/* Tombol Likes */}
+          {/* Likes */}
           <button
             onClick={() => {
               if (isLiked) {
@@ -131,7 +168,7 @@ export default function TimelineCard({
           >
             <Heart
               size={20}
-              className={`transition-colors ${isLiked ? "fill-red-500 stroke-red-500" : "text-[#FDFDFD]"}`}
+              className={`transition-colors ${isLiked ? "fill-red-500 stroke-red-500 text-red-500" : "text-[#FDFDFD]"}`}
               strokeWidth={1.5}
             />
             <span className="text-xs font-semibold text-[#FDFDFD]">
@@ -139,7 +176,7 @@ export default function TimelineCard({
             </span>
           </button>
 
-          {/* Tombol Comments */}
+          {/* Comments */}
           <button
             onClick={() => router.push(`/posts/${post.id}/comments`)}
             className="flex flex-row items-center gap-1.5 cursor-pointer text-white hover:text-zinc-300"
@@ -154,13 +191,15 @@ export default function TimelineCard({
             </span>
           </button>
 
-          {/* Tombol Share */}
+          {/* Share */}
           <button
             onClick={() => {
-              navigator.clipboard.writeText(
-                `${window.location.origin}/post/${post.id}`,
-              );
-              toast.success("Link copied to clipboard");
+              if (typeof window !== "undefined") {
+                navigator.clipboard.writeText(
+                  `${window.location.origin}/${post.author?.username || ""}?postId=${post.id}`,
+                );
+                toast.success("Link copied to clipboard");
+              }
             }}
             className="flex flex-row items-center gap-1.5 cursor-pointer text-white hover:text-zinc-300"
           >
@@ -169,28 +208,17 @@ export default function TimelineCard({
               className="text-[#FDFDFD] -rotate-12"
               strokeWidth={1.5}
             />
-            <span className="text-xs font-semibold text-[#FDFDFD]">20</span>
           </button>
         </div>
 
         {/* Tombol Bookmark Kanan */}
         <button
-          onClick={() => {
-            if (isSaved) {
-              unsaveMutation.mutate(post.id, {
-                onSuccess: () => setIsSaved(false),
-              });
-            } else {
-              saveMutation.mutate(post.id, {
-                onSuccess: () => setIsSaved(true),
-              });
-            }
-          }}
+          onClick={handleBookmarkToggle}
           className="w-6 h-6 flex items-center justify-center cursor-pointer text-white transition-transform active:scale-95"
         >
           <Bookmark
             size={20}
-            className={`transition-colors ${isSaved ? "fill-[#7F51F9] text-[#7F51F9]" : "text-[#FDFDFD]"}`}
+            className={`transition-colors ${isSaved ? "fill-[#7F51F9] stroke-[#7F51F9] text-[#7F51F9]" : "text-[#FDFDFD]"}`}
             strokeWidth={1.5}
           />
         </button>
@@ -198,25 +226,21 @@ export default function TimelineCard({
 
       {/* 4. CAPTION TEXT AREA */}
       <div className="w-full flex flex-col items-start px-1">
-        {/* Username Bold */}
         <span className="text-sm font-bold text-[#FDFDFD] tracking-tight">
           {post.author?.username || "username"}
         </span>
 
-        {/* Description & Show More Controller */}
         <div className="w-full flex flex-col items-start mt-1">
           <p
-            className={`text-sm text-zinc-300 tracking-tight leading-relaxed break-words whitespace-pre-wrap transition-all ${
+            className={`text-sm text-zinc-300 tracking-tight leading-relaxed wrap-break-words whitespace-pre-wrap transition-all ${
               !isExpanded && isLongCaption
                 ? "line-clamp-2 overflow-hidden"
                 : "h-auto"
             }`}
           >
-            {post.caption ||
-              "Lorem ipsum dolor sit amet consectetur. Sit egestas ultricies a velit imperdiet amet morbi egestas fermentu..."}
+            {post.caption}
           </p>
 
-          {/* Tombol Show More Sesuai Figma Screenshot */}
           {isLongCaption && (
             <button
               type="button"

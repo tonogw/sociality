@@ -1,16 +1,16 @@
 import { Pagination } from "./api";
 
-export interface PostItem {
-  id: number;
-  imageUrl: string;
-  caption: string;
-  createdAt: string;
-  author: AuthorItem;
+// export interface PostItem {
+//   id: number;
+//   imageUrl: string;
+//   caption: string;
+//   createdAt: string;
+//   author: AuthorItem;
 
-  likeCount: number;
-  commentCount: number;
-  likedByMe: boolean;
-}
+//   likeCount: number;
+//   commentCount: number;
+//   likedByMe: boolean;
+// }
 
 export interface AuthorItem {
   id: number;
@@ -68,10 +68,49 @@ export interface CreatePostResponse {
   data: PostItem;
 }
 
+// export interface PostResponse {
+//   success: boolean;
+//   message: string;
+//   data: {
+//     saved: boolean;
+//   };
+// }
+
+export interface AuthorItem {
+  id: number;
+  username: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
+export interface PostItem {
+  id: number;
+  imageUrl: string;
+  caption?: string;
+  createdAt: string;
+  likeCount?: number;
+  commentCount?: number;
+  likedByMe?: boolean;
+  savedByMe?: boolean;
+  author?: AuthorItem;
+}
+
 export interface PostResponse {
   success: boolean;
   message: string;
   data: {
-    saved: boolean;
+    posts: PostItem[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
   };
+}
+
+export interface TimelineCardProps {
+  post: PostItem;
+  canDelete?: boolean;
+  currentUsername?: string;
 }

@@ -9,10 +9,9 @@ import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 
-// Mengimpor skema validasi tipe data formulir
 import { updateProfileSchema, type UpdateUserInput } from "@/validations/auth";
 
-// Mengimpor komponen pembantu modular sesuai folder asli proyek Anda
+// Impor komponen modular asli dari struktur proyek lokal Anda
 import ImageCropUploader from "@/components/shared/ImageCropUploader";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
@@ -25,24 +24,11 @@ import ProfileEditModal from "@/components/profile/ProfileEditModal";
 import BottomNavbar from "@/components/shared/BottomNavbar";
 import VisitorAction from "@/components/profile/VisitorAction";
 
-// Mengimpor service penghubung API
 import { meService } from "@/services/meService";
+import type { PostItem } from "@/types/post";
 
 interface ApiErrorResponse {
   message?: string;
-}
-
-interface Post {
-  id: number;
-  imageUrl: string;
-  caption?: string;
-  createdAt: string;
-  author?: {
-    id: number;
-    username: string;
-    name: string;
-    avatarUrl: string | null;
-  };
 }
 
 interface ProfileStateData {
@@ -53,8 +39,8 @@ interface ProfileStateData {
   phone: string;
   bio: string | null;
   avatarUrl: string | null;
-  posts?: Post[];
-  saved?: Post[];
+  posts?: PostItem[];
+  saved?: PostItem[];
 }
 
 export default function MyProfilePage() {
@@ -65,13 +51,17 @@ export default function MyProfilePage() {
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
+  // State Kontrol Modal & Uploader Modul
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  // const [isAvatarCropOpen, setIsAvatarCropOpen] = useState(false); // Modul Crop Avatar Baru
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
+    null,
+  );
+  const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
 
-  // 1. QUERY DATA PROFIL DAN KIRIMAN
+  // 1. QUERY CORE DATA PROFIL SAYA
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: meService.getMe,
@@ -105,7 +95,7 @@ export default function MyProfilePage() {
     user?.posts && user.posts.length > 0 ? user.posts : backupPost;
   const savedPosts = user?.saved || [];
 
-  // 2. FORM CONFIGURATION & WATCHER
+  // 2. FORM CONFIGURATION
   const {
     register,
     handleSubmit,
@@ -128,11 +118,12 @@ export default function MyProfilePage() {
     }
   }, [user, reset]);
 
-  // 3. MUTATION: UPDATE PROFILE INFO
+  // 3. MUTATION: UPDATE PROFILE (INFO + AVATAR BARU)
   const mutation = useMutation({
     mutationFn: meService.updateMe,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["my-feed"] });
       toast.success("Profile updated successfully", {
         style: {
           background: "#079455",
@@ -142,8 +133,8 @@ export default function MyProfilePage() {
         },
       });
       setIsModalOpen(false);
-      setSelectedFile(null);
-      setPreviewUrl(null);
+      setSelectedAvatarFile(null);
+      setPreviewAvatarUrl(null);
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       const msg = error.response?.data?.message || "Failed to update profile.";
@@ -151,13 +142,22 @@ export default function MyProfilePage() {
     },
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
-  };
+  // Handler Pemicu Pemotongan Avatar dari Modal Edit
+  // const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     // Buka penampung crop image modular untuk avatar
+  //     setIsAvatarCropOpen(true);
+  //   }
+  // };
+
+  // Menerima hasil potongan gambar dari ImageCropUploader khusus Avatar
+  // const handleAvatarCropped = (croppedFile: File) => {
+  //   setSelectedAvatarFile(croppedFile);
+  //   setPreviewAvatarUrl(URL.createObjectURL(croppedFile));
+  //   setIsAvatarCropOpen(false);
+  //   toast.info("Avatar image cropped successfully!");
+  // };
 
   const onSubmit = (data: UpdateUserInput) => {
     const formData = new FormData();
@@ -167,13 +167,14 @@ export default function MyProfilePage() {
     if (data.bio) formData.append("bio", data.bio);
     if (data.avatarUrl) formData.append("avatarUrl", data.avatarUrl);
 
-    if (selectedFile) {
-      formData.append("avatar", selectedFile);
+    // Pasangkan file avatar hasil crop ke payload form data jika ada
+    if (selectedAvatarFile) {
+      formData.append("avatar", selectedAvatarFile);
     }
     mutation.mutate(formData);
   };
 
-  // 4. HANDLER: CREATE POST & AUTOMATIC SUBSEQUENT FETCH
+  // 4. HANDLER: CREATE POST & SUBSEQUENT FETCH AUTOMATION
   const handleCreatePost = async (croppedFile: File, caption?: string) => {
     try {
       const token = localStorage.getItem("token") || "";
@@ -184,9 +185,7 @@ export default function MyProfilePage() {
 
       const res = await fetch(`${baseUrl}/posts`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
@@ -204,13 +203,11 @@ export default function MyProfilePage() {
           },
         });
 
-        // INTEGRASI KRUSIAL SINKRONISASI:
-        // Melakukan subsequent fetch instan dengan membatalkan cache kueri yang aktif di atas secara asinkronus
         await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
         await queryClient.invalidateQueries({ queryKey: ["my-feed"] });
 
         setIsCreatePostOpen(false);
-        setActiveTab("posts"); // Kembalikan tab ke galeri kiriman agar foto baru langsung terlihat
+        setActiveTab("posts");
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed process post");
@@ -228,7 +225,6 @@ export default function MyProfilePage() {
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
       <div className="w-full max-w-90.25 flex flex-col gap-4">
-        {/* HEADER PROFIL */}
         <ProfileHeader
           name={user?.name}
           username={user?.username}
@@ -236,7 +232,6 @@ export default function MyProfilePage() {
           isOwner={isOwner}
         />
 
-        {/* AKSI EDIT PROFIL KHUSUS OWNER */}
         {isOwner ? (
           <OwnerActions
             isOwner={true}
@@ -246,13 +241,10 @@ export default function MyProfilePage() {
           <VisitorAction isFollowing={false} onFollowToggle={() => {}} />
         )}
 
-        {/* TEKS BIO SINGKAT */}
         <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-words">
-          {user?.bio ||
-            "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!"}
+          {user?.bio || "Creating unforgettable moments! 📸✨"}
         </p>
 
-        {/* STATISTIK PENGIKUT & LIKES */}
         <ProfileStats
           postCount={postCount}
           followersCount={followersCount}
@@ -260,7 +252,6 @@ export default function MyProfilePage() {
           likesCount={likesCount}
         />
 
-        {/* TAB GALERI POSTS & SAVED */}
         <div className="w-full flex flex-col gap-4 mt-2">
           <ProfileTabs
             activeTab={activeTab}
@@ -275,7 +266,6 @@ export default function MyProfilePage() {
             onSavedClick={() => setActiveTab("saved")}
           />
 
-          {/* KONTEN GALERI */}
           {activeTab === "posts" ? (
             userPosts.length === 0 ? (
               <ProfileEmptyState
@@ -297,15 +287,15 @@ export default function MyProfilePage() {
         </div>
       </div>
 
-      {/* BOTTOM NAVBAR KONSISTEN */}
+      {/* FIXED BOTTOM NAV BAR (HOME MENGARAH KONSISTEN KE /posts) */}
       <BottomNavbar
-        onHome={() => router.push("/feed")}
+        onHome={() => router.push("/posts")}
         onCreatePost={() => setIsCreatePostOpen(true)}
         onProfile={() => router.push("/my")}
         avatarUrl={user?.avatarUrl}
       />
 
-      {/* MODULAR COMPONENT: IMAGE CROP UPLOADER */}
+      {/* MODUL UPLOADER 1: BUAT POSTINGAN BARU */}
       <ImageCropUploader
         isOpen={isCreatePostOpen}
         onClose={() => setIsCreatePostOpen(false)}
@@ -313,13 +303,21 @@ export default function MyProfilePage() {
         isUploading={false}
       />
 
-      {/* MODAL EDIT DATA PROFIL */}
+      {/* MODUL UPLOADER 2: PROSES PEMOTONGAN/CROP AVATAR BARU */}
+      {/* <ImageCropUploader
+        isOpen={isAvatarCropOpen}
+        onClose={() => setIsAvatarCropOpen(false)}
+        // onUpload={handleAvatarCropped}
+        isUploading={false}
+      /> */}
+
+      {/* MODAL WINDOWS EDIT PROFILE */}
       <ProfileEditModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        previewUrl={previewUrl}
+        previewUrl={previewAvatarUrl}
         avatarUrl={user?.avatarUrl}
-        handleFileChange={handleFileChange}
+        handleFileChange={handleAvatarFileChange}
         register={register}
         handleSubmit={handleSubmit}
         onSubmit={onSubmit}

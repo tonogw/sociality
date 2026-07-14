@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Loader2, Lock } from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
@@ -14,12 +14,14 @@ import ProfileSavedGallery from "@/components/profile/ProfileSavedGallery";
 import BottomNavbar from "@/components/shared/BottomNavbar";
 import VisitorAction from "@/components/profile/VisitorAction";
 
+// Import kueri khusus React Query dari folder queries Anda
 import { useUser } from "@/queries/users/useUser";
 import { useUserPosts } from "@/queries/users/useUserPosts";
 import { useUserLikes } from "@/queries/users/useUserLikes";
 
-export default function UserProfilePage() {
+function UserProfileContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const username = params.username as string;
   const router = useRouter();
 
@@ -27,14 +29,14 @@ export default function UserProfilePage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
+  /* STREAMING_CHUNK: Extracting search parameters and handling authentication logic */
+  const postIdParam = searchParams.get("postId");
+
   useEffect(() => {
     // Deteksi keberadaan token di localStorage secara aman di client-side
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-    // SOLUSI UNTUK ERROR LINT (react-hooks/set-state-in-effect):
-    // Membungkus perubahan state ke dalam antrean macro-task secara asinkron.
-    // Ini menghentikan peringatan render beruntun sinkron secara total dan aman.
     const timer = setTimeout(() => {
       setIsLoggedIn(!!token);
     }, 0);
@@ -42,10 +44,45 @@ export default function UserProfilePage() {
     return () => clearTimeout(timer);
   }, []);
 
+  /* STREAMING_CHUNK: Fetching user details and processing subsequent auto-scrolling */
+  useEffect(() => {
+    // FIX: Jika ada parameter postId, otomatis ubah mode tampilan ke LIST dan scroll ke sasaran
+    // if (postIdParam) {
+    //   setActiveTab("posts");
+    //   setViewMode("list");
+
+    //   const scrollTimer = setTimeout(() => {
+    //     const targetElement = document.getElementById(`post-${postIdParam}`);
+    //     if (targetElement) {
+    //       targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    //     }
+    //   }, 350); // Delay sedikit agar render TimelineCard selesai sepenuhnya
+
+    //   return () => clearTimeout(scrollTimer);
+    // }
+
+    if (postIdParam) {
+      const scrollTimer = setTimeout(() => {
+        setActiveTab("posts");
+        setViewMode("list");
+
+        // Jalankan pencarian elemen dan scroll setelah state ter-update
+        const targetElement = document.getElementById(`post-${postIdParam}`);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 350); // Memberikan jeda waktu ideal bagi render DOM
+
+      return () => clearTimeout(scrollTimer);
+    }
+  }, [postIdParam]);
+
+  // Memanggil React Query secara kondisional
   const { data: profile, isLoading: isProfileLoading } = useUser(username);
   const { data: postsData, isLoading: isPostsLoading } = useUserPosts(username);
   const { data: likesData } = useUserLikes(username);
 
+  // Normalisasi data dari API agar tidak menghasilkan status "undefined"
   const user = profile;
   const userPosts = postsData?.posts ?? [];
   const savedPosts = likesData?.posts ?? [];
@@ -60,7 +97,6 @@ export default function UserProfilePage() {
   const followingCount = stats?.following ?? 0;
   const likesCount = stats?.likes ?? 0;
 
-  // Menampilkan loader layar penuh saat mendeteksi status autentikasi atau memuat data API
   if (
     isLoggedIn === null ||
     (isLoggedIn && (isProfileLoading || isPostsLoading))
@@ -74,14 +110,14 @@ export default function UserProfilePage() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-[361px] flex flex-col gap-4">
+      <div className="w-full max-w-90.25 flex flex-col gap-4">
         <ProfileHeader
           name={user?.name || "User"}
           username={user?.username || username}
           avatarUrl={user?.avatarUrl}
         />
 
-        {/* TOMBOL AKSI (EDIT JIKA PEMILIK / FOLLOW JIKA PENGUNJUNG) */}
+        {/* TOMBOL AKSI */}
         {isLoggedIn ? (
           isOwner ? (
             <OwnerActions
@@ -95,7 +131,6 @@ export default function UserProfilePage() {
             />
           )
         ) : (
-          /* Jika belum login, tampilkan tombol follow yang mengarah ke halaman login */
           <button
             onClick={() => router.push("/login")}
             className="w-full h-11 bg-[#7F51F9] hover:bg-[#6936F2] transition-colors text-xs font-bold text-[#FDFDFD] rounded-xl flex items-center justify-center cursor-pointer shadow-md"
@@ -104,13 +139,13 @@ export default function UserProfilePage() {
           </button>
         )}
 
-        {/* BIO SINGKAT */}
-        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
+        {/* BIO */}
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-words">
           {user?.bio ||
             "Creating unforgettable moments! 📸✨ Let's cherish every second together!"}
         </p>
 
-        {/* STATISTIK PORTFOLIO */}
+        {/* STATISTIK */}
         <ProfileStats
           postCount={postCount}
           followersCount={followersCount}
@@ -165,7 +200,7 @@ export default function UserProfilePage() {
                 <h3 className="text-base font-bold text-[#FDFDFD] tracking-tight">
                   Moments are Locked
                 </h3>
-                <p className="text-xs text-[#A4A7AE] max-w-[260px] leading-relaxed">
+                <p className="text-xs text-[#A4A7AE] max-w-65 leading-relaxed">
                   Sign in or create a Sociality account to explore @{username}
                   &apos;s moments, saved collections, and full portfolio.
                 </p>
@@ -185,7 +220,24 @@ export default function UserProfilePage() {
       <BottomNavbar
         onHome={() => router.push("/feed")}
         onCreatePost={() => router.push("/create")}
+        onProfile={() => router.push("/my")}
+        avatarUrl={user?.avatarUrl}
       />
     </div>
+  );
+}
+
+// 📦 EXPORT DENGAN BOUNDARY SUSPENSE UNTUK MENJAGA NEXT.JS STATIC OPTIMIZATION
+export default function UserProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-screen bg-black flex items-center justify-center">
+          <Loader2 className="animate-spin text-[#6936F2]" size={32} />
+        </div>
+      }
+    >
+      <UserProfileContent />
+    </Suspense>
   );
 }
