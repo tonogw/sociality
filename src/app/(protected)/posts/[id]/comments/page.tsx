@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Smile, Trash2, MessageCircle } from "lucide-react";
 import Image from "next/image";
-// import { toast } from "sonner";
 
-// Import kueri komentar yang sudah dikonsolidasikan
 import {
   useComment,
   useCreateComment,
   useDeleteComment,
 } from "@/queries/comments/useComments";
 import { useMe } from "@/queries/me/useGetMe";
+import { CommentItem } from "@/types/comment";
 
 export default function PostCommentsPage() {
   const params = useParams();
@@ -23,14 +22,15 @@ export default function PostCommentsPage() {
   const [commentText, setCommentText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  // Fetch komentar (Limit 50 untuk menampung diskusi panjang)
+  // Fetch komentar (Limit 50 untuk menampung diskusi panjang sesuai spesifikasi)
   const { data: commentsResponse, isLoading } = useComment(postId, 1, 50);
   const createCommentMutation = useCreateComment();
   const deleteCommentMutation = useDeleteComment();
 
-  const comments = commentsResponse?.posts ?? commentsResponse?.comments ?? [];
+  // FIX: Mengakses data.items sesuai skema CommentResponse di types/comment.ts
+  const comments = commentsResponse?.data?.items ?? [];
 
-  // Daftar Emoji sesuai spesifikasi Figma Anda
+  // Daftar Emoji sesuai spesifikasi figma Anda
   const emojis = [
     "😀",
     "😅",
@@ -91,8 +91,8 @@ export default function PostCommentsPage() {
   return (
     <div className="w-full min-h-screen bg-black text-[#FDFDFD] font-sans flex flex-col items-center pt-6 pb-32">
       {/* CONTAINER UTAMA (Ukuran Maksimal Sesuai Figma 393px) */}
-      <div className="w-full max-w-[393px] flex flex-col gap-4 px-4">
-        {/* TOMBOL CLOSE / KEMBALI */}
+      <div className="w-full max-w-98.25 flex flex-col gap-4 px-4">
+        {/* TOMBOL KEMBALI */}
         <div className="w-full flex justify-end">
           <button
             onClick={() => router.back()}
@@ -104,7 +104,7 @@ export default function PostCommentsPage() {
         </div>
 
         {/* SECTION UTAMA KOMENTAR */}
-        <div className="w-full bg-[#0A0D12] border border-[#181D27] rounded-2xl flex flex-col p-4 gap-4 min-h-[538px] relative overflow-hidden">
+        <div className="w-full bg-[#0A0D12] border border-[#181D27] rounded-2xl flex flex-col p-4 gap-4 min-h-134.5 relative overflow-hidden">
           {/* Header Post Discussion */}
           <div className="w-full border-b border-[#181D27] pb-3">
             <h1 className="text-base font-bold text-[#FDFDFD] tracking-tight">
@@ -113,7 +113,7 @@ export default function PostCommentsPage() {
           </div>
 
           {/* LIST KOMENTAR */}
-          <div className="flex-1 flex flex-col gap-4 overflow-y-auto max-h-[360px] pr-1 scrollbar-thin">
+          <div className="flex-1 flex flex-col gap-4 overflow-y-auto max-h-90 pr-1 scrollbar-thin">
             {comments.length === 0 ? (
               /* KONDISI EMPTY STATE SESUAI FIGMA */
               <div className="w-full py-16 flex flex-col items-center justify-center text-center gap-1.5 animate-fade-in">
@@ -129,9 +129,13 @@ export default function PostCommentsPage() {
               </div>
             ) : (
               /* LIST ARRAY KOMENTAR */
-              comments.map((comment: any) => {
+              comments.map((comment: CommentItem) => {
+                // Verifikasi menggunakan isMine bawaan backend atau mencocokkan username
                 const isCommentOwner =
-                  comment.author?.username === me?.data.profile.username;
+                  comment.isMine ||
+                  (me?.data.profile.username &&
+                    comment.author?.username === me.data.profile.username);
+
                 return (
                   <div
                     key={comment.id}
@@ -150,7 +154,7 @@ export default function PostCommentsPage() {
                               unoptimized
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xs font-bold text-white">
+                            <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xs font-bold text-white">
                               {comment.author?.name?.charAt(0).toUpperCase() ||
                                 "U"}
                             </div>
@@ -183,7 +187,7 @@ export default function PostCommentsPage() {
                     </div>
 
                     {/* Konten Teks Komentar */}
-                    <p className="text-xs text-[#FDFDFD] leading-relaxed break-words pl-1">
+                    <p className="text-xs text-[#FDFDFD] leading-relaxed wrap-break-words pl-1">
                       {comment.text}
                     </p>
 
@@ -198,8 +202,8 @@ export default function PostCommentsPage() {
           <div className="w-full flex flex-col gap-2 pt-2 relative">
             {/* POP-UP EMOJI SELECTOR */}
             {showEmojiPicker && (
-              <div className="absolute bottom-14 left-0 z-50 bg-[#0A0D12] border border-[#181D27] rounded-xl p-3 w-[210px] h-[152px] shadow-2xl animate-fade-in">
-                <div className="grid grid-cols-5 gap-2 max-h-[120px] overflow-y-auto">
+              <div className="absolute bottom-14 left-0 z-50 bg-[#0A0D12] border border-[#181D27] rounded-xl p-3 w-52.5 h-38 shadow-2xl animate-fade-in">
+                <div className="grid grid-cols-5 gap-2 max-h-30 overflow-y-auto">
                   {emojis.map((emoji) => (
                     <button
                       key={emoji}

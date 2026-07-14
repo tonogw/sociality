@@ -1,16 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { AxiosError } from "axios";
-
+import { Loader2, Lock } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-import { updateProfileSchema, type UpdateUserInput } from "@/validations/auth";
-import ImageCropUploader from "@/components/shared/ImageCropUploader";
 
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
@@ -19,50 +11,41 @@ import ProfileTabs from "@/components/profile/ProfileTabs";
 import ProfileGallery from "@/components/profile/ProfileGallery";
 import ProfileEmptyState from "@/components/profile/ProfileEmptyState";
 import ProfileSavedGallery from "@/components/profile/ProfileSavedGallery";
-import ProfileEditModal from "@/components/profile/ProfileEditModal";
 import BottomNavbar from "@/components/shared/BottomNavbar";
 import VisitorAction from "@/components/profile/VisitorAction";
 
-// 1. IMPORT CUSTOM HOOKS BAWAAN APLIKASI UNTUK MENGURANGI REDUNDANSI KODE
 import { useUser } from "@/queries/users/useUser";
 import { useUserPosts } from "@/queries/users/useUserPosts";
 import { useUserLikes } from "@/queries/users/useUserLikes";
 
-interface ApiErrorResponse {
-  message?: string;
-}
-
-interface Post {
-  id: number;
-  imageUrl: string;
-  caption?: string;
-  createdAt: string;
-  author?: {
-    id: number;
-    username: string;
-    name: string;
-    avatarUrl: string | null;
-  };
-}
-
 export default function UserProfilePage() {
   const params = useParams();
   const username = params.username as string;
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  useEffect(() => {
+    // Deteksi keberadaan token di localStorage secara aman di client-side
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  // 2. MENGGUNAKAN CUSTOM HOOKS YANG SUDAH TERDEFINISI DI FOLDER QUERIES
+    // SOLUSI UNTUK ERROR LINT (react-hooks/set-state-in-effect):
+    // Membungkus perubahan state ke dalam antrean macro-task secara asinkron.
+    // Ini menghentikan peringatan render beruntun sinkron secara total dan aman.
+    const timer = setTimeout(() => {
+      setIsLoggedIn(!!token);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const { data: profile, isLoading: isProfileLoading } = useUser(username);
   const { data: postsData, isLoading: isPostsLoading } = useUserPosts(username);
   const { data: likesData } = useUserLikes(username);
 
-  // Normalisasi data untuk menghindari error "undefined"
   const user = profile;
   const userPosts = postsData?.posts ?? [];
   const savedPosts = likesData?.posts ?? [];
@@ -70,39 +53,18 @@ export default function UserProfilePage() {
   const isOwner = user?.isMe ?? false;
   const isFollowing = user?.isFollowing ?? false;
 
-  // Ambil data statistik pengikut & kiriman secara dinamis
+  // Mendapatkan data statistik pengikut & kiriman secara aman
   const stats = user?.counts;
   const postCount = stats?.post ?? 0;
   const followersCount = stats?.followers ?? 0;
   const followingCount = stats?.following ?? 0;
   const likesCount = stats?.likes ?? 0;
 
-  // Form Handling untuk Edit Profile
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<UpdateUserInput>({
-    resolver: zodResolver(updateProfileSchema),
-  });
-
-  // Sinkronisasi data form saat profil berhasil dimuat
-  useEffect(() => {
-    if (user) {
-      reset({
-        name: user.name || "",
-        username: user.username || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        bio: user.bio || "",
-        avatarUrl: user.avatarUrl || "",
-      });
-    }
-  }, [user, reset]);
-
-  // Loading state yang bersih dan estetik
-  if (isProfileLoading || isPostsLoading) {
+  // Menampilkan loader layar penuh saat mendeteksi status autentikasi atau memuat data API
+  if (
+    isLoggedIn === null ||
+    (isLoggedIn && (isProfileLoading || isPostsLoading))
+  ) {
     return (
       <div className="w-full h-screen bg-black flex items-center justify-center">
         <Loader2 className="animate-spin text-[#6936F2]" size={32} />
@@ -112,31 +74,43 @@ export default function UserProfilePage() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-90.25 flex flex-col gap-4">
-        {/* INFO USER HEADER */}
+      <div className="w-full max-w-[361px] flex flex-col gap-4">
         <ProfileHeader
           name={user?.name || "User"}
           username={user?.username || username}
           avatarUrl={user?.avatarUrl}
         />
 
-        {/* ACTIONS BUTTONS (OWNER VS VISITOR) */}
-        {isOwner ? (
-          <OwnerActions
-            isOwner={true}
-            onEditProfile={() => setIsModalOpen(true)}
-          />
+        {/* TOMBOL AKSI (EDIT JIKA PEMILIK / FOLLOW JIKA PENGUNJUNG) */}
+        {isLoggedIn ? (
+          isOwner ? (
+            <OwnerActions
+              isOwner={true}
+              onEditProfile={() => router.push("/settings")}
+            />
+          ) : (
+            <VisitorAction
+              isFollowing={isFollowing}
+              onFollowToggle={() => {}}
+            />
+          )
         ) : (
-          <VisitorAction isFollowing={isFollowing} onFollowToggle={() => {}} />
+          /* Jika belum login, tampilkan tombol follow yang mengarah ke halaman login */
+          <button
+            onClick={() => router.push("/login")}
+            className="w-full h-11 bg-[#7F51F9] hover:bg-[#6936F2] transition-colors text-xs font-bold text-[#FDFDFD] rounded-xl flex items-center justify-center cursor-pointer shadow-md"
+          >
+            Follow
+          </button>
         )}
 
-        {/* BIO TEXT */}
+        {/* BIO SINGKAT */}
         <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
           {user?.bio ||
             "Creating unforgettable moments! 📸✨ Let's cherish every second together!"}
         </p>
 
-        {/* STATISTIK COUNTER */}
+        {/* STATISTIK PORTFOLIO */}
         <ProfileStats
           postCount={postCount}
           followersCount={followersCount}
@@ -144,47 +118,73 @@ export default function UserProfilePage() {
           likesCount={likesCount}
         />
 
-        {/* GALLERY NAVIGATION TABS */}
         <div className="w-full flex flex-col gap-4 mt-2">
-          <ProfileTabs
-            activeTab={activeTab}
-            viewMode={viewMode}
-            onPostsClick={() => {
-              if (activeTab === "posts") {
-                setViewMode((prev) => (prev === "grid" ? "list" : "grid"));
-              } else {
-                setActiveTab("posts");
-              }
-            }}
-            onSavedClick={() => setActiveTab("saved")}
-          />
-
-          {/* RENDERING FEED ATAU PROFILE SAVED GALLERY */}
-          {activeTab === "posts" ? (
-            userPosts.length === 0 ? (
-              <ProfileEmptyState
-                onCreatePost={() => setIsCreatePostOpen(true)}
+          {isLoggedIn ? (
+            <>
+              {/* Menu Tab Navigasi Galeri */}
+              <ProfileTabs
+                activeTab={activeTab}
+                viewMode={viewMode}
+                onPostsClick={() => {
+                  if (activeTab === "posts") {
+                    setViewMode((prev) => (prev === "grid" ? "list" : "grid"));
+                  } else {
+                    setActiveTab("posts");
+                  }
+                }}
+                onSavedClick={() => setActiveTab("saved")}
               />
-            ) : (
-              <div className="w-full h-auto animate-fade-in">
-                <ProfileGallery
-                  posts={userPosts}
-                  viewMode={viewMode}
-                  username={user?.username}
-                  canDelete={isOwner}
-                />
-              </div>
-            )
+
+              {/* Konten Utama Galeri Kiriman */}
+              {activeTab === "posts" ? (
+                userPosts.length === 0 ? (
+                  <ProfileEmptyState
+                    onCreatePost={() => router.push("/create")}
+                  />
+                ) : (
+                  <div className="w-full h-auto animate-fade-in">
+                    <ProfileGallery
+                      posts={userPosts}
+                      viewMode={viewMode}
+                      username={user?.username}
+                      canDelete={isOwner}
+                    />
+                  </div>
+                )
+              ) : (
+                <ProfileSavedGallery posts={savedPosts} />
+              )}
+            </>
           ) : (
-            <ProfileSavedGallery posts={savedPosts} />
+            /* === KONDISI LANDING WALL: DIKUNCI BAGI USER BELUM LOGIN === */
+            <div className="w-full flex flex-col items-center justify-center py-16 px-6 bg-[#0A0D12] border border-[#181D27] rounded-2xl text-center gap-4 animate-fade-in mt-2">
+              <div className="w-12 h-12 rounded-full bg-zinc-900/50 flex items-center justify-center text-[#7F51F9] border border-[#181D27]">
+                <Lock size={18} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <h3 className="text-base font-bold text-[#FDFDFD] tracking-tight">
+                  Moments are Locked
+                </h3>
+                <p className="text-xs text-[#A4A7AE] max-w-[260px] leading-relaxed">
+                  Sign in or create a Sociality account to explore @{username}
+                  &apos;s moments, saved collections, and full portfolio.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push("/login")}
+                className="mt-2 py-2.5 px-8 bg-[#7F51F9] hover:bg-[#6936F2] text-xs font-bold text-white rounded-full transition-colors cursor-pointer shadow-lg"
+              >
+                Sign in to View Profile
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      {/* FIXED BOTTOM NAV MENU BAR */}
+      {/* FOOTER BOTTOM NAV BAR */}
       <BottomNavbar
         onHome={() => router.push("/feed")}
-        onCreatePost={() => setIsCreatePostOpen(true)}
+        onCreatePost={() => router.push("/create")}
       />
     </div>
   );

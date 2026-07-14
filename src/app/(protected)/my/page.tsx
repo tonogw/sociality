@@ -23,7 +23,7 @@ import ProfileEditModal from "@/components/profile/ProfileEditModal";
 import BottomNavbar from "@/components/shared/BottomNavbar";
 import { meService } from "@/services/meService";
 import VisitorAction from "@/components/profile/VisitorAction";
-import { userService } from "@/services/userService";
+// import { userService } from "@/services/userService";
 
 interface ApiErrorResponse {
   message?: string;
