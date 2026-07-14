@@ -22,6 +22,8 @@ import ProfileSavedGallery from "@/components/profile/ProfileSavedGallery";
 import ProfileEditModal from "@/components/profile/ProfileEditModal";
 import BottomNavbar from "@/components/shared/BottomNavbar";
 import { meService } from "@/services/meService";
+import VisitorAction from "@/components/profile/VisitorAction";
+import { userService } from "@/services/userService";
 
 interface ApiErrorResponse {
   message?: string;
@@ -68,12 +70,13 @@ export default function MyProfilePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { data: profileData, isLoading } = useQuery({
-    queryKey: ["user-profile"],
+    queryKey: ["my-profile"],
     queryFn: meService.getMe,
+    // queryFn: userService.getUser(username),
   });
 
   const { data: feedData } = useQuery({
-    queryKey: ["user-my-feed"],
+    queryKey: ["my-feed"],
     queryFn: async () => {
       const token = localStorage.getItem("token") || "";
       const res = await fetch(`${baseUrl}/feed?page=1&limit=20`, {
@@ -87,6 +90,9 @@ export default function MyProfilePage() {
   });
 
   const user = profileData?.data?.profile as ProfileStateData | undefined;
+  const isOwner = true;
+  // const isOwner = profile.isMe;
+  // const isFollowing = profile.isFollowing;
   const stats = profileData?.data?.stats;
 
   const postCount = stats?.posts ?? 0;
@@ -232,7 +238,14 @@ export default function MyProfilePage() {
         />
 
         {/* ACTIONS BUTTONS */}
-        <OwnerActions onEditProfile={() => setIsModalOpen(true)} />
+        {isOwner ? (
+          <OwnerActions
+            isOwner={true}
+            onEditProfile={() => setIsModalOpen(true)}
+          />
+        ) : (
+          <VisitorAction isFollowing={false} onFollowToggle={() => {}} />
+        )}
 
         {/* BIO TEXT */}
         <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-word">
@@ -276,6 +289,7 @@ export default function MyProfilePage() {
                   posts={userPosts}
                   viewMode={viewMode}
                   username={user?.username}
+                  canDelete={isOwner}
                 />
               </div>
             )

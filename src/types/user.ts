@@ -60,3 +60,11 @@ export interface FollowingResponse {
     pagination: Pagination;
   };
 }
+
+export interface ProfileViewModel {
+  profile: string;
+  posts: string;
+  stats: string;
+  isOwner: boolean;
+  isFollowing: boolean;
+}

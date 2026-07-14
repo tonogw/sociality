@@ -23,25 +23,27 @@ export interface PostData {
   posts: PostItem[];
 }
 
-// export interface TimelineCardProps {
-//   post: {
-//     id: number;
-//     imageUrl: string;
-//     caption?: string;
-//     createdAt: string;
-//     author?: AuthorItem;
-//     likeCount?: number;
-//     commentCount?: number;
-//     likedByMe?: boolean;
-//     savedByMe?: boolean; // Mengantisipasi skema bookmark masa depan
-//   };
-//   currentUsername?: string; // Untuk pengecekan hak akses tombol hapus data post sendiri
-// }
-
 export interface TimelineCardProps {
-  post: PostItem;
+  post: {
+    id: number;
+    imageUrl: string;
+    caption?: string;
+    createdAt: string;
+    author?: AuthorItem;
+    likeCount?: number;
+    commentCount?: number;
+    likedByMe?: boolean;
+    savedByMe?: boolean; // Mengantisipasi skema bookmark masa depan
+  };
+  currentUsername?: string; // Untuk pengecekan hak akses tombol hapus data post sendiri
+
   canDelete?: boolean;
 }
+
+// export interface TimelineCardProps {
+//   post: PostItem;
+//   canDelete?: boolean;
+// }
 
 export interface FetchPostsResponse {
   // success: boolean;
