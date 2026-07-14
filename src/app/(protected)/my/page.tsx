@@ -7,11 +7,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-
 import { useRouter } from "next/navigation";
-import { updateProfileSchema, type UpdateUserInput } from "@/validations/auth";
-import ImageCropUploader from "@/components/shared/ImageCropUploader";
 
+// Mengimpor skema validasi tipe data formulir
+import { updateProfileSchema, type UpdateUserInput } from "@/validations/auth";
+
+// Mengimpor komponen pembantu modular sesuai folder asli proyek Anda
+import ImageCropUploader from "@/components/shared/ImageCropUploader";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
 import OwnerActions from "@/components/profile/OwnerAction";
@@ -21,15 +23,15 @@ import ProfileEmptyState from "@/components/profile/ProfileEmptyState";
 import ProfileSavedGallery from "@/components/profile/ProfileSavedGallery";
 import ProfileEditModal from "@/components/profile/ProfileEditModal";
 import BottomNavbar from "@/components/shared/BottomNavbar";
-import { meService } from "@/services/meService";
 import VisitorAction from "@/components/profile/VisitorAction";
-// import { userService } from "@/services/userService";
+
+// Mengimpor service penghubung API
+import { meService } from "@/services/meService";
 
 interface ApiErrorResponse {
   message?: string;
 }
 
-// 🟢 PERBAIKAN TS 1: Tambahkan skema objek 'author' ke dalam interface Post agar linter lulus bersih
 interface Post {
   id: number;
   imageUrl: string;
@@ -69,10 +71,10 @@ export default function MyProfilePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // 1. QUERY DATA PROFIL DAN KIRIMAN
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: meService.getMe,
-    // queryFn: userService.getUser(username),
   });
 
   const { data: feedData } = useQuery({
@@ -91,8 +93,6 @@ export default function MyProfilePage() {
 
   const user = profileData?.data?.profile as ProfileStateData | undefined;
   const isOwner = true;
-  // const isOwner = profile.isMe;
-  // const isFollowing = profile.isFollowing;
   const stats = profileData?.data?.stats;
 
   const postCount = stats?.posts ?? 0;
@@ -105,6 +105,7 @@ export default function MyProfilePage() {
     user?.posts && user.posts.length > 0 ? user.posts : backupPost;
   const savedPosts = user?.saved || [];
 
+  // 2. FORM CONFIGURATION & WATCHER
   const {
     register,
     handleSubmit,
@@ -127,10 +128,11 @@ export default function MyProfilePage() {
     }
   }, [user, reset]);
 
+  // 3. MUTATION: UPDATE PROFILE INFO
   const mutation = useMutation({
     mutationFn: meService.updateMe,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       toast.success("Profile updated successfully", {
         style: {
           background: "#079455",
@@ -171,10 +173,10 @@ export default function MyProfilePage() {
     mutation.mutate(formData);
   };
 
+  // 4. HANDLER: CREATE POST & AUTOMATIC SUBSEQUENT FETCH
   const handleCreatePost = async (croppedFile: File, caption?: string) => {
     try {
       const token = localStorage.getItem("token") || "";
-
       const formData = new FormData();
 
       formData.append("image", croppedFile);
@@ -189,7 +191,6 @@ export default function MyProfilePage() {
       });
 
       if (!res.ok) throw new Error("Failed Post new moment");
-
       const json = await res.json();
 
       if (json) {
@@ -203,15 +204,13 @@ export default function MyProfilePage() {
           },
         });
 
-        queryClient.invalidateQueries({
-          queryKey: ["user-profile"],
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: ["user-my-feed"],
-        });
+        // INTEGRASI KRUSIAL SINKRONISASI:
+        // Melakukan subsequent fetch instan dengan membatalkan cache kueri yang aktif di atas secara asinkronus
+        await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        await queryClient.invalidateQueries({ queryKey: ["my-feed"] });
 
         setIsCreatePostOpen(false);
+        setActiveTab("posts"); // Kembalikan tab ke galeri kiriman agar foto baru langsung terlihat
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed process post");
@@ -229,15 +228,15 @@ export default function MyProfilePage() {
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
       <div className="w-full max-w-90.25 flex flex-col gap-4">
-        {/* INFO USER */}
-
+        {/* HEADER PROFIL */}
         <ProfileHeader
           name={user?.name}
           username={user?.username}
           avatarUrl={user?.avatarUrl}
+          isOwner={isOwner}
         />
 
-        {/* ACTIONS BUTTONS */}
+        {/* AKSI EDIT PROFIL KHUSUS OWNER */}
         {isOwner ? (
           <OwnerActions
             isOwner={true}
@@ -247,12 +246,13 @@ export default function MyProfilePage() {
           <VisitorAction isFollowing={false} onFollowToggle={() => {}} />
         )}
 
-        {/* BIO TEXT */}
-        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-word">
+        {/* TEKS BIO SINGKAT */}
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-words">
           {user?.bio ||
             "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!"}
         </p>
 
+        {/* STATISTIK PENGIKUT & LIKES */}
         <ProfileStats
           postCount={postCount}
           followersCount={followersCount}
@@ -260,10 +260,7 @@ export default function MyProfilePage() {
           likesCount={likesCount}
         />
 
-        {/* STATS COUNTER BAR */}
-
-        {/* GALLERY NAVIGATION TABS */}
-
+        {/* TAB GALERI POSTS & SAVED */}
         <div className="w-full flex flex-col gap-4 mt-2">
           <ProfileTabs
             activeTab={activeTab}
@@ -278,6 +275,7 @@ export default function MyProfilePage() {
             onSavedClick={() => setActiveTab("saved")}
           />
 
+          {/* KONTEN GALERI */}
           {activeTab === "posts" ? (
             userPosts.length === 0 ? (
               <ProfileEmptyState
@@ -299,14 +297,15 @@ export default function MyProfilePage() {
         </div>
       </div>
 
-      {/* FIXED BOTTOM NAV MENU BAR */}
-
+      {/* BOTTOM NAVBAR KONSISTEN */}
       <BottomNavbar
         onHome={() => router.push("/feed")}
         onCreatePost={() => setIsCreatePostOpen(true)}
+        onProfile={() => router.push("/my")}
+        avatarUrl={user?.avatarUrl}
       />
 
-      {/* INTEGRASI MURNI IMAGE CROPPER MODULAR */}
+      {/* MODULAR COMPONENT: IMAGE CROP UPLOADER */}
       <ImageCropUploader
         isOpen={isCreatePostOpen}
         onClose={() => setIsCreatePostOpen(false)}
@@ -314,8 +313,7 @@ export default function MyProfilePage() {
         isUploading={false}
       />
 
-      {/* MODAL EDIT BASIC PROFILE */}
-
+      {/* MODAL EDIT DATA PROFIL */}
       <ProfileEditModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
