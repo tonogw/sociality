@@ -92,8 +92,8 @@ export default function PersonalFeedPage() {
       {/* FIXED BOTTOM NAV MENU BAR */}
       <BottomNavbar
         onHome={() => router.push("/feed")}
-        onCreatePost={() => router.push("/my")} // Membuka uploader di halaman profil
-        onProfile={() => router.push("/my")}
+        onCreatePost={() => router.push("/me")} // Membuka uploader di halaman profil
+        onProfile={() => router.push("/me")}
         avatarUrl={currentUser?.avatarUrl}
       />
     </div>

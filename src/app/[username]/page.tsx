@@ -220,7 +220,7 @@ function UserProfileContent() {
       <BottomNavbar
         onHome={() => router.push("/feed")}
         onCreatePost={() => router.push("/create")}
-        onProfile={() => router.push("/my")}
+        onProfile={() => router.push("/me")}
         avatarUrl={user?.avatarUrl}
       />
     </div>

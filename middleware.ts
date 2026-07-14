@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/posts") ||
     pathname.startsWith("/search") ||
     pathname.startsWith("/saved") ||
-    pathname.startsWith("/my") ||
+    pathname.startsWith("/me") ||
     pathname.startsWith("/create");
 
   if (isProtected && !token) {
@@ -26,7 +26,7 @@ export const config = {
     "/posts/:path*",
     "/search/:path*",
     "/saved/:path*",
-    "/my/:path*",
+    "/me/:path*",
     "/create/:path*",
   ],
 };

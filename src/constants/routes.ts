@@ -6,5 +6,5 @@ export const ROUTES = {
   SEARCH: "/search",
   CREATE: "/create",
   SAVED: "/saved",
-  ME: "/my",
+  ME: "/me",
 } as const;

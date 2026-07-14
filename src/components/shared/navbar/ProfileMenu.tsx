@@ -97,7 +97,7 @@ export default function ProfileMenu() {
 
           <div className="flex flex-col gap-2">
             <Link
-              href="/my"
+              href="/me"
               onClick={() => setOpen(false)}
               className="flex h-10 items-center gap-3 rounded-xl px-3 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-900/50 hover:text-white"
             >

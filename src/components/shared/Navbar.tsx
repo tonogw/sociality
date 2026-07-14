@@ -33,7 +33,7 @@ export default function Navbar({ fromQuery, lastPage }: NavbarProps) {
     return <NavbarSearch />;
   }
 
-  if (pathname === "/my") {
+  if (pathname === "/me") {
     return <NavbarProfile title="My Profile" />;
   }
 

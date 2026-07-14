@@ -3,7 +3,7 @@ import { User, LogOut } from "lucide-react";
 export const profileMenu = [
   {
     label: "My Profile",
-    href: "/my",
+    href: "/me",
     icon: User,
   },
   {

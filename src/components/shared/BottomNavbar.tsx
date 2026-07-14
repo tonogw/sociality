@@ -35,7 +35,7 @@ export default function BottomNavbar({
         <Plus size={22} />
       </button>
 
-      {/* FIX: TOMBOL PROFILE INTERAKTIF MENUJU /my */}
+      {/* FIX: TOMBOL PROFILE INTERAKTIF MENUJU /me */}
       <button
         onClick={onProfile}
         className="flex-1 flex flex-col items-center gap-0.5 text-zinc-400 hover:text-white cursor-pointer"

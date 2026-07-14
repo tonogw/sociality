@@ -285,7 +285,7 @@ export default function MyProfilePage() {
       <BottomNavbar
         onHome={() => router.push("/feed")}
         onCreatePost={() => setIsCreatePostOpen(true)}
-        onProfile={() => router.push("/my")}
+        onProfile={() => router.push("/me")}
         avatarUrl={user?.avatarUrl}
       />
 
