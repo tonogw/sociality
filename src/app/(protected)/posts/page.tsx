@@ -17,25 +17,35 @@ function FeedContent() {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const router = useRouter();
 
-  // State untuk menyimpan daftar postingan murni
+  // State utama untuk menampung seluruh daftar postingan
   const [postsList, setPostsList] = useState<PostItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Loader layar penuh (hanya untuk page 1)
   const [error, setError] = useState<string | null>(null);
 
-  // SWITCHER LAYOUT STATE: "list" (Timeline IG) atau "grid" (9 Kotak Eksplorasi)
+  // SWITCHER LAYOUT STATE: "list" atau "grid"
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
+  // === STRATEGI INFINITE SCROLL STATE ===
+  const [page, setPage] = useState(1); // Melacak halaman aktif saat ini
+  const [hasMore, setHasMore] = useState(true); // Menandai jika masih ada halaman tersisa di backend
+  const [isFetchingMore, setIsFetchingMore] = useState(false); // Mencegah duplikasi tembakan API saat scroll
+
+  // 1. FETCH DATA DENGAN SISTEM PAGINASI DINAMIS
   useEffect(() => {
     if (!baseUrl) return;
 
     const fetchTimelineFeed = async () => {
       try {
-        setLoading(true);
+        if (page === 1) {
+          setLoading(true);
+        } else {
+          setIsFetchingMore(true);
+        }
         setError(null);
         const token = localStorage.getItem("token") || "";
 
-        // Tembak endpoint /api/posts sesuai cURL Swagger fungsional Anda
-        const res = await fetch(`${baseUrl}/posts?page=1&limit=20`, {
+        // Mengambil data secara dinamis berdasarkan parameter page aktif
+        const res = await fetch(`${baseUrl}/posts?page=${page}&limit=20`, {
           method: "GET",
           headers: {
             accept: "application/json",
@@ -47,7 +57,25 @@ function FeedContent() {
         const json = await res.json();
 
         if (json?.success && json?.data?.posts) {
-          setPostsList(json.data.posts);
+          const newPosts = json.data.posts;
+
+          // JIKA page = 1: Isi ulang state (reset)
+          // JIKA page > 1: Gabungkan post lama dengan post baru yang baru saja di-fetch (append)
+          setPostsList((prev) =>
+            page === 1 ? newPosts : [...prev, ...newPosts],
+          );
+
+          // Ambil metadata pagination dari API response untuk menentukan status hasMore
+          const pagination = json?.data?.pagination;
+          if (pagination) {
+            // Jika halaman saat ini kurang dari totalPages, berarti masih ada data
+            setHasMore(page < (pagination.totalPages || 10));
+          } else {
+            // Fallback: Jika limit=20 dan data yang kembali kurang dari 20, berarti data sudah habis
+            setHasMore(newPosts.length === 20);
+          }
+        } else {
+          setHasMore(false);
         }
       } catch (err) {
         console.error(err);
@@ -56,13 +84,36 @@ function FeedContent() {
         );
       } finally {
         setLoading(false);
+        setIsFetchingMore(false);
       }
     };
 
     fetchTimelineFeed();
-  }, [baseUrl]);
+  }, [baseUrl, page]);
 
-  if (loading) {
+  // 2. DETEKSI SCROLL UNTUK MEMICU LOAD MORE (INFINITE SCROLL EVENT)
+  useEffect(() => {
+    const handleScroll = () => {
+      // Jangan trigger fetch jika sedang loading, sedang memuat halaman baru, atau data sudah habis
+      if (loading || isFetchingMore || !hasMore) return;
+
+      const threshold = 150; // Jarak aman (px) dari bawah layar untuk memicu fetch data baru
+      const windowHeight = window.innerHeight;
+      const scrollY = window.scrollY;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // Jika posisi scroll saat ini mendekati bagian paling bawah halaman
+      if (windowHeight + scrollY >= documentHeight - threshold) {
+        setPage((prevPage) => prevPage + 1);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, isFetchingMore, hasMore]);
+
+  // Loader Layar Penuh hanya muncul pada loading pertama kali (Halaman 1)
+  if (loading && page === 1) {
     return (
       <div className="w-full h-[70vh] flex flex-col items-center justify-center gap-2">
         <Loader2 className="animate-spin text-[#6936F2]" size={32} />
@@ -82,7 +133,6 @@ function FeedContent() {
             Sociality Feed
           </h1>
 
-          {/* TOMBOL TOGGLE UNTUK BERGANTI MODE TAMPILAN TIMELINE / GRID BOX */}
           <div className="flex items-center gap-1 bg-[#0A0D12] border border-[#181D27] p-1 rounded-full">
             <button
               onClick={() => setViewMode("list")}
@@ -127,11 +177,11 @@ function FeedContent() {
         {postsList.length > 0 && (
           <>
             {viewMode === "list" ? (
-              // OPTION A: TIMELINE INSTAGRAM STYLE (SCROLL LIST PANJANG)
+              // OPTION A: TIMELINE INSTAGRAM STYLE
               <div className="flex flex-col gap-6 w-full animate-fade-in">
-                {postsList.map((post) => (
+                {postsList.map((post, index) => (
                   <div
-                    key={post.id}
+                    key={`${post.id}-${index}`} // Kombinasi ID dan Index menjamin key selalu unik di Virtual DOM Next.js
                     className="w-full flex flex-col gap-3 border-b border-zinc-950 pb-5"
                   >
                     {/* INFO PENULIS POST */}
@@ -177,7 +227,6 @@ function FeedContent() {
                           sizes="361px"
                           className="object-cover"
                           unoptimized
-                          priority
                         />
                       </div>
                     )}
@@ -212,11 +261,11 @@ function FeedContent() {
                 ))}
               </div>
             ) : (
-              // OPTION B: MODE 9 KOTAK GRID IMAGE EXPLORE STYLE (RESIZE MENJADI KOTAK-KOTAK COMPACT)
+              // OPTION B: MODE 9 KOTAK GRID IMAGE EXPLORE STYLE
               <div className="grid grid-cols-3 gap-[1.78px] w-full animate-fade-in mt-2">
-                {postsList.map((post) => (
+                {postsList.map((post, index) => (
                   <div
-                    key={post.id}
+                    key={`${post.id}-grid-${index}`}
                     onClick={() => router.push(`/${post.author.username}`)}
                     className="w-full aspect-square bg-zinc-900 rounded-[2.66px] overflow-hidden relative border border-[#181D27]/40 group cursor-pointer"
                   >
@@ -251,6 +300,26 @@ function FeedContent() {
               </div>
             )}
           </>
+        )}
+
+        {/* === INDIKATOR LOADER INFINITE SCROLL DI BAGIAN BAWAH === */}
+        {isFetchingMore && (
+          <div className="w-full py-6 flex flex-col items-center justify-center gap-2 border-t border-zinc-900/50 mt-4">
+            <Loader2 className="animate-spin text-[#6936F2]" size={20} />
+            <p className="text-[10px] text-zinc-500 font-mono tracking-wider">
+              Memuat postingan lainnya...
+            </p>
+          </div>
+        )}
+
+        {/* PESAN JIKA DATA DI BACKEND SUDAH HABIS TOTAL */}
+        {!hasMore && postsList.length > 0 && (
+          <div className="w-full py-8 text-center border-t border-zinc-900/50 mt-4">
+            <p className="text-[10px] text-zinc-600 font-mono">
+              ~ Kamu telah melihat semua postingan global ({postsList.length}{" "}
+              posts) ~
+            </p>
+          </div>
         )}
       </div>
     </div>
