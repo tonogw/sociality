@@ -19,7 +19,7 @@ export interface CommentResponse {
   success: boolean;
   message: string;
   data: {
-    items: CommentItem[];
+    comments: CommentItem[];
     pagination: Pagination;
   };
 }

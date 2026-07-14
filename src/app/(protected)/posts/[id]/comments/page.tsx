@@ -22,15 +22,14 @@ export default function PostCommentsPage() {
   const [commentText, setCommentText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  // Fetch komentar (Limit 50 untuk menampung diskusi panjang sesuai spesifikasi)
-  const { data: commentsResponse, isLoading } = useComment(postId, 1, 50);
+  // Fetch komentar (Limit 10 atau 20 sesuai kebutuhan halaman)
+  const { data: commentsResponse, isLoading } = useComment(postId, 1, 20);
   const createCommentMutation = useCreateComment();
   const deleteCommentMutation = useDeleteComment();
 
-  // FIX: Mengakses data.items sesuai skema CommentResponse di types/comment.ts
-  const comments = commentsResponse?.data?.items ?? [];
+  // FIX UTAMA: Menunjuk langsung ke "comments" sesuai Swagger Backend
+  const comments = commentsResponse?.data?.comments ?? [];
 
-  // Daftar Emoji sesuai spesifikasi figma Anda
   const emojis = [
     "😀",
     "😅",
@@ -90,8 +89,7 @@ export default function PostCommentsPage() {
 
   return (
     <div className="w-full min-h-screen bg-black text-[#FDFDFD] font-sans flex flex-col items-center pt-6 pb-32">
-      {/* CONTAINER UTAMA (Ukuran Maksimal Sesuai Figma 393px) */}
-      <div className="w-full max-w-98.25 flex flex-col gap-4 px-4">
+      <div className="w-full max-w-[393px] flex flex-col gap-4 px-4">
         {/* TOMBOL KEMBALI */}
         <div className="w-full flex justify-end">
           <button
@@ -104,8 +102,7 @@ export default function PostCommentsPage() {
         </div>
 
         {/* SECTION UTAMA KOMENTAR */}
-        <div className="w-full bg-[#0A0D12] border border-[#181D27] rounded-2xl flex flex-col p-4 gap-4 min-h-134.5 relative overflow-hidden">
-          {/* Header Post Discussion */}
+        <div className="w-full bg-[#0A0D12] border border-[#181D27] rounded-2xl flex flex-col p-4 gap-4 min-h-[538px] relative overflow-hidden">
           <div className="w-full border-b border-[#181D27] pb-3">
             <h1 className="text-base font-bold text-[#FDFDFD] tracking-tight">
               Post Discussion
@@ -113,12 +110,11 @@ export default function PostCommentsPage() {
           </div>
 
           {/* LIST KOMENTAR */}
-          <div className="flex-1 flex flex-col gap-4 overflow-y-auto max-h-90 pr-1 scrollbar-thin">
+          <div className="flex-1 flex flex-col gap-4 overflow-y-auto max-h-[360px] pr-1 scrollbar-thin">
             {comments.length === 0 ? (
-              /* KONDISI EMPTY STATE SESUAI FIGMA */
               <div className="w-full py-16 flex flex-col items-center justify-center text-center gap-1.5 animate-fade-in">
                 <div className="w-12 h-12 rounded-full bg-zinc-900/50 flex items-center justify-center text-zinc-500 mb-2 border border-zinc-800">
-                  <MessageCircle size={20} />
+                  <MessageCircle size="{20}" />
                 </div>
                 <h3 className="text-base font-bold text-[#FDFDFD]">
                   No Comments yet
@@ -128,9 +124,7 @@ export default function PostCommentsPage() {
                 </p>
               </div>
             ) : (
-              /* LIST ARRAY KOMENTAR */
               comments.map((comment: CommentItem) => {
-                // Verifikasi menggunakan isMine bawaan backend atau mencocokkan username
                 const isCommentOwner =
                   comment.isMine ||
                   (me?.data.profile.username &&
@@ -143,24 +137,23 @@ export default function PostCommentsPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2.5">
-                        {/* Avatar */}
                         <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden relative shrink-0">
                           {comment.author?.avatarUrl ? (
                             <Image
-                              src={comment.author.avatarUrl}
                               alt="Avatar"
-                              fill
                               className="object-cover"
+                              width={32}
+                              height={32}
+                              src={comment.author.avatarUrl}
                               unoptimized
                             />
                           ) : (
-                            <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xs font-bold text-white">
+                            <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xs font-bold text-white">
                               {comment.author?.name?.charAt(0).toUpperCase() ||
                                 "U"}
                             </div>
                           )}
                         </div>
-                        {/* Nama & Info Waktu */}
                         <div className="flex flex-col justify-center">
                           <span className="text-xs font-semibold text-[#FDFDFD]">
                             {comment.author?.username || "Username"}
@@ -175,7 +168,6 @@ export default function PostCommentsPage() {
                         </div>
                       </div>
 
-                      {/* Tombol Hapus khusus pemilik komentar */}
                       {isCommentOwner && (
                         <button
                           onClick={() => handleDeleteComment(comment.id)}
@@ -186,8 +178,7 @@ export default function PostCommentsPage() {
                       )}
                     </div>
 
-                    {/* Konten Teks Komentar */}
-                    <p className="text-xs text-[#FDFDFD] leading-relaxed wrap-break-words pl-1">
+                    <p className="text-xs text-[#FDFDFD] leading-relaxed break-words pl-1">
                       {comment.text}
                     </p>
 
@@ -198,12 +189,11 @@ export default function PostCommentsPage() {
             )}
           </div>
 
-          {/* AREA INPUT CHAT DAN EMOJI SESUAI FIGMA */}
+          {/* AREA INPUT CHAT DAN EMOJI */}
           <div className="w-full flex flex-col gap-2 pt-2 relative">
-            {/* POP-UP EMOJI SELECTOR */}
             {showEmojiPicker && (
-              <div className="absolute bottom-14 left-0 z-50 bg-[#0A0D12] border border-[#181D27] rounded-xl p-3 w-52.5 h-38 shadow-2xl animate-fade-in">
-                <div className="grid grid-cols-5 gap-2 max-h-30 overflow-y-auto">
+              <div className="absolute bottom-14 left-0 z-50 bg-[#0A0D12] border border-[#181D27] rounded-xl p-3 w-[210px] h-[152px] shadow-2xl animate-fade-in">
+                <div className="grid grid-cols-5 gap-2 max-h-[120px] overflow-y-auto">
                   {emojis.map((emoji) => (
                     <button
                       key={emoji}
@@ -222,7 +212,6 @@ export default function PostCommentsPage() {
               onSubmit={handleSendComment}
               className="w-full flex items-center gap-2"
             >
-              {/* Tombol Trigger Emoji */}
               <button
                 type="button"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -238,9 +227,10 @@ export default function PostCommentsPage() {
                     showEmojiPicker ? "text-[#7F51F9]" : "text-[#FDFDFD]"
                   }
                 />
+
+                {/* <Smile "text-[#7F51F9]" "text-[#FDFDFD]"} : ? className="{showEmojiPicker" size="{20}"/> */}
               </button>
 
-              {/* Input Teks & Tombol Kirim */}
               <div className="flex-1 h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl flex items-center px-4 gap-2">
                 <input
                   type="text"

@@ -37,6 +37,17 @@ export default function Navbar({ fromQuery, lastPage }: NavbarProps) {
     return <NavbarProfile title="My Profile" />;
   }
 
+  const isCommentsRoute = /^\/posts\/\d+\/comments$/.test(pathname);
+  if (isCommentsRoute) {
+    return (
+      <NavbarProfile
+        title="Post Discussion"
+        fromQuery={fromQuery}
+        lastPage={lastPage}
+      />
+    );
+  }
+
   if (/^\/[^/]+$/.test(pathname) && !SYSTEM_ROUTES.has(pathname)) {
     return (
       <NavbarProfile
