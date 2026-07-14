@@ -6,12 +6,14 @@ import type { PostItem } from "@/types/post";
 interface ProfileTimelineProps {
   posts: PostItem[];
   currentUsername?: string;
+  canDelete?: boolean;
   isLoading?: boolean;
 }
 
 export default function ProfileTimeline({
   posts,
   currentUsername,
+  canDelete,
   isLoading = false,
 }: ProfileTimelineProps) {
   if (isLoading) {
@@ -41,6 +43,7 @@ export default function ProfileTimeline({
         <TimelineCard
           key={post.id}
           post={post}
+          canDelete={canDelete}
           currentUsername={currentUsername}
         />
       ))}

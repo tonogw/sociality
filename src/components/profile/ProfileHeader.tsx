@@ -6,12 +6,15 @@ interface ProfileHeaderProps {
   name?: string;
   username?: string;
   avatarUrl?: string | null;
+
+  isOwner?: boolean;
 }
 
 export default function ProfileHeader({
   name,
   username,
   avatarUrl,
+  isOwner = false,
 }: ProfileHeaderProps) {
   return (
     <div className="flex items-center gap-3">
@@ -38,6 +41,8 @@ export default function ProfileHeader({
         </h2>
 
         <p className="text-sm text-[#A4A7AE]">@{username}</p>
+
+        {isOwner && <span className="text-[10px] text-[#6936F2]">You</span>}
       </div>
     </div>
   );

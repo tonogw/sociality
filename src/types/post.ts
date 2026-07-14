@@ -36,7 +36,14 @@ export interface TimelineCardProps {
     savedByMe?: boolean; // Mengantisipasi skema bookmark masa depan
   };
   currentUsername?: string; // Untuk pengecekan hak akses tombol hapus data post sendiri
+
+  canDelete?: boolean;
 }
+
+// export interface TimelineCardProps {
+//   post: PostItem;
+//   canDelete?: boolean;
+// }
 
 export interface FetchPostsResponse {
   // success: boolean;

@@ -1,374 +1,191 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
-import { Loader2, Send, Grid, Heart } from "lucide-react";
-import Image from "next/image";
-// import type { FollowerUsers, UserProfileData } from "@/types/user";
-import { useFollow } from "@/queries/users/useFollow";
-import { useUser } from "@/queries/users/useUser";
-import { useUnfollow } from "@/queries/users/useUnfollow";
-import Navbar from "@/components/shared/Navbar";
+import { useState, useEffect } from "react";
+import { Loader2, Lock } from "lucide-react";
+import { useRouter, useParams } from "next/navigation";
 
-import ProfileTimeline from "@/components/profile/ProfileTimeline";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import ProfileStats from "@/components/profile/ProfileStats";
+import OwnerActions from "@/components/profile/OwnerAction";
+import ProfileTabs from "@/components/profile/ProfileTabs";
+import ProfileGallery from "@/components/profile/ProfileGallery";
+import ProfileEmptyState from "@/components/profile/ProfileEmptyState";
+import ProfileSavedGallery from "@/components/profile/ProfileSavedGallery";
+import BottomNavbar from "@/components/shared/BottomNavbar";
+import VisitorAction from "@/components/profile/VisitorAction";
+
+import { useUser } from "@/queries/users/useUser";
 import { useUserPosts } from "@/queries/users/useUserPosts";
 import { useUserLikes } from "@/queries/users/useUserLikes";
-// import { FetchPostsResponse, GetMyProfileResponse } from "@/types";
 
-function ProfileContent() {
+export default function UserProfilePage() {
   const params = useParams();
+  const username = params.username as string;
+  const router = useRouter();
 
-  //   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  const username = params?.username as string;
-  const fromQuery = searchParams.get("fromQ") ?? "";
-  const lastPage = searchParams.get("lastPage") ?? "1";
+  useEffect(() => {
+    // Deteksi keberadaan token di localStorage secara aman di client-side
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  // const [profile, setProfile] = useState<UserProfileData | null>(null);
-  // const [loading, setLoading] = useState(true);
-  const [followLoading, setFollowLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"gallery" | "liked">("gallery");
+    // SOLUSI UNTUK ERROR LINT (react-hooks/set-state-in-effect):
+    // Membungkus perubahan state ke dalam antrean macro-task secara asinkron.
+    // Ini menghentikan peringatan render beruntun sinkron secara total dan aman.
+    const timer = setTimeout(() => {
+      setIsLoggedIn(!!token);
+    }, 0);
 
-  const { data: profile, isLoading } = useUser(username);
-  // const profile = data;
-  const { data: postsData, isLoading: postLoading } = useUserPosts(username);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const { data: likesData, isLoading: likesLoading } = useUserLikes(username);
+  const { data: profile, isLoading: isProfileLoading } = useUser(username);
+  const { data: postsData, isLoading: isPostsLoading } = useUserPosts(username);
+  const { data: likesData } = useUserLikes(username);
 
-  const timelinePosts =
-    activeTab === "gallery"
-      ? (postsData?.posts ?? [])
-      : (likesData?.posts ?? []);
+  const user = profile;
+  const userPosts = postsData?.posts ?? [];
+  const savedPosts = likesData?.posts ?? [];
 
-  console.log("postsData", postsData);
-  console.log("timelinePosts", timelinePosts);
+  const isOwner = user?.isMe ?? false;
+  const isFollowing = user?.isFollowing ?? false;
 
-  const timelineLoading = activeTab === "gallery" ? postLoading : likesLoading;
-  // Fetch profile public data from backend server
-  // useEffect(() => {
-  //   if (!username || !baseUrl) return;
+  // Mendapatkan data statistik pengikut & kiriman secara aman
+  const stats = user?.counts;
+  const postCount = stats?.post ?? 0;
+  const followersCount = stats?.followers ?? 0;
+  const followingCount = stats?.following ?? 0;
+  const likesCount = stats?.likes ?? 0;
 
-  // const fetchUserProfile = async () => {
-  //   try {
-  //     // Menggunakan rute dinamis backend yang sesuai
-  //     const token = localStorage.getItem("token") || "";
-  //     const res = await fetch(`${baseUrl}/users/${username}`, {
-  //       method: "GET",
-  //       headers: {
-  //         accept: "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  // if (!res.ok) throw new Error("Profile not found");
-  // const json = await res.json();
-
-  // // Sesuaikan dengan mapping struktur response API Anda
-  // if (json?.success && json?.data) {
-  //   setProfile(json.data);
-  // }
-  //  else {
-  //   // Fallback mockup jika API detail profil Anda menggunakan skema berbeda
-  //   setProfile({
-  //     id: Math.random(),
-  //     username: username,
-  //     name: username.toUpperCase(),
-  //     avatarUrl: null,
-  //     bio: "Creating unforgettable moments with my favorite person! 📸✨ Let's cherish every second together!",
-  //     postCount: 50,
-  //     followersCount: 100,
-  //     followingCount: 43,
-  //     likesCount: 567,
-  //     isFollowedByMe: false,
-  //   });
-  // }
-  //   } catch (err) {
-  //     console.error("Gagal menarik data profil:", err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  //   fetchUserProfile();
-  // }, [username, baseUrl]);
-
-  //   const handleBackNavigation = () => {
-  //     if (fromQuery) {
-  //       router.push(
-  //         `/users/search?q=${encodeURIComponent(fromQuery)}&page=${lastPage}`,
-  //       );
-  //     } else {
-  //       router.push("/feed");
-  //     }
-  //   };
-  // const followMutation.mutateAsync(username);
-  const followMutation = useFollow();
-  const unFollowMutation = useUnfollow();
-
-  const handleFollowAction = async () => {
-    //   if (!profile || !baseUrl || followLoading) return;
-    if (!profile || followLoading) return;
-    setFollowLoading(true);
-    try {
-      if (profile.isFollowing) {
-        await unFollowMutation.mutateAsync(username);
-      } else {
-        await followMutation.mutateAsync(username);
-      }
-    } finally {
-      setFollowLoading(false);
-    }
-  };
-  //   const token = localStorage.getItem("token") || "";
-  //   // Fetch api follow
-  //   const res = await fetch(`${baseUrl}/follow/${username}`, {
-  //     method: "POST",
-  //     headers: {
-  //       accept: "application/json",
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //     body: "", // as params -d '' at CURL
-  //   });
-
-  // if (!res.ok) throw new Error("Failed change to follow status");
-  // const json = await res.json();
-
-  // if (json?.success) {
-  //   // get following new status from backend server
-  //   const isNowFollowing = json?.data?.following;
-
-  //   setProfile((prev) => {
-  //     if (!prev) return null;
-
-  //     const currentFollowers = Number(
-  //       prev.counts.followers ??
-  //         //   prev.followers ??
-  //         //   prev._count?.followers ??
-  //         0,
-  //     );
-
-  //         return {
-  //           ...prev,
-  //           isFollowedByMe: isNowFollowing,
-  //           // Update total follow
-  //           followersCount: isNowFollowing
-  //             ? currentFollowers + 1
-  //             : Math.max(0, currentFollowers - 1),
-  //           //   ? prev.followersCount + 1
-  //           //   : prev.followersCount - 1,
-  //         };
-  //       });
-  //     }
-  //   } catch (err) {
-  //     console.error("Follow error:", err);
-  //   } finally {
-  //     setFollowLoading(false);
-  //   }
-  // };
-
-  //   ArrowLeft button
-  //   const handleBackNavigation = () => {
-  //     if (fromQuery) {
-  //       router.push(
-  //         `/users/search?q=${encodeURIComponent(fromQuery)}&page=${lastPage}&limit=20`,
-  //       );
-  //     } else {
-  //       router.push("/feed");
-  //     }
-  //   };
-
-  //   const handleImageUploadAction = () => {
-  //     alert(`Open gallery to post new timeline to your profile @${username}`);
-  //   };
-
-  if (isLoading) {
+  // Menampilkan loader layar penuh saat mendeteksi status autentikasi atau memuat data API
+  if (
+    isLoggedIn === null ||
+    (isLoggedIn && (isProfileLoading || isPostsLoading))
+  ) {
     return (
-      <div className="w-full h-[60vh] flex flex-col items-center justify-center gap-2 text-white">
-        <Loader2 className="animate-spin text-[#6936F2]" size={28} />
-        <p className="text-xs text-zinc-500">Loading profile data...</p>
+      <div className="w-full h-screen bg-black flex items-center justify-center">
+        <Loader2 className="animate-spin text-[#6936F2]" size={32} />
       </div>
     );
   }
 
-  //   const renderName = profile?.name || username;
-  //   const renderBio = profile?.bio || "No description template provided";
-  //   const renderPost = profile?.counts.post ?? 0;
-  //   const render
-
   return (
-    <div className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-24 flex flex-col items-center font-sans">
-      <Navbar fromQuery={fromQuery} lastPage={lastPage} />
-      <div className="w-full max-w-90.25 flex flex-col gap-4">
-        {/* HEADER NAVIGATION (BARIS ATAS FIGMA) */}
-        <div className="flex items-center justify-between w-full border-b border-[#181D27] pb-3">
-          {/* <div className="flex items-center gap-3">
-            <button
-              onClick={handleBackNavigation}
-              className="p-1 hover:bg-zinc-900 rounded-full cursor-pointer text-white"
-            >
-              <ArrowLeft size={22} />
-            </button>
-            <span className="text-base font-bold tracking-tight text-[#FDFDFD]">
-              {profile?.name || username}
-            </span>
-          </div> */}
-        </div>
-
-        {/* PROFILE HEADER (WIDTH: 361px, HEIGHT: 116px FIGMA AUTO LAYOUT) */}
-        <div className="flex flex-col gap-3 w-full">
-          <div className="flex items-center gap-3 w-full">
-            {/* AVATAR CONTAINER DECORATION (64px x 64px) */}
-            <div className="w-16 h-16 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden flex items-center justify-center shrink-0 relative">
-              {profile?.avatarUrl ? (
-                <Image
-                  src={profile.avatarUrl}
-                  alt={profile.name}
-                  width={64}
-                  height={64}
-                  unoptimized
-                  className="w-14 h-14 object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-lg font-bold text-white">
-                  {profile?.name?.charAt(0).toUpperCase() || "U"}
-                </div>
-              )}
-            </div>
-
-            {/* IDENTITY (HEIGHT 56px FIGMA) */}
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-[#FDFDFD] tracking-tight">
-                {profile?.name}
-              </span>
-              <span className="text-sm text-[#A4A7AE]">
-                @{profile?.username}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ACTIONS CONTAINER (BUTTON ACTION & SHARE) */}
-        <div className="flex items-center gap-3 w-full h-10 mt-1">
-          <button
-            onClick={handleFollowAction}
-            disabled={followLoading}
-            className={`flex-1 h-full rounded-full text-sm font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              profile?.isFollowing
-                ? "bg-[#181D27] border border-zinc-800"
-                : "bg-[#6936F2] hover:bg-[#582cd1]"
-            }`}
-          >
-            {followLoading ? (
-              <Loader2 className="animate-spin" size={16} />
-            ) : profile?.isFollowing ? (
-              "Following"
-            ) : (
-              "Follow"
-            )}
-          </button>
-
-          {/* SHARE BUTTON ROUNDED ACCORDING TO FIGMA STYLE */}
-          <button className="w-10 h-10 border border-[#181D27] rounded-full flex items-center justify-center text-white hover:bg-zinc-900 transition-colors cursor-pointer">
-            <Send
-              size={18}
-              className="transform rotate-[-20deg] -translate-x-px"
-            />
-          </button>
-        </div>
-
-        {/* BIO TEXT DESCRIPTION */}
-        <div className="text-sm text-[#FDFDFD] leading-6 font-normal tracking-wide mt-1">
-          {profile?.bio || "No description template provided."}
-        </div>
-
-        {/* STATS COUNT GRID GRIDBAR (HEIGHT: 50px ACCORDING TO FIGMA) */}
-        <div className="flex items-center justify-between w-full bg-[#0A0D12]/30 border border-[#181D27]/50 rounded-2xl py-3 px-2 text-center mt-2">
-          <div className="flex-1">
-            <p className="text-base font-bold text-[#FDFDFD]">
-              {profile?.counts.post}
-            </p>
-            <p className="text-[10px] text-[#A4A7AE] uppercase tracking-wider mt-0.5">
-              Post
-            </p>
-          </div>
-          <div className="w-px h-6 bg-[#181D27]" />
-          <div className="flex-1">
-            <p className="text-base font-bold text-[#FDFDFD]">
-              {profile?.counts.followers}
-            </p>
-            <p className="text-[10px] text-[#A4A7AE] uppercase tracking-wider mt-0.5">
-              Followers
-            </p>
-          </div>
-          <div className="w-px h-6 bg-[#181D27]" />
-          <div className="flex-1">
-            <p className="text-base font-bold text-[#FDFDFD]">
-              {profile?.counts.following}
-            </p>
-            <p className="text-[10px] text-[#A4A7AE] uppercase tracking-wider mt-0.5">
-              Following
-            </p>
-          </div>
-          <div className="w-px h-6 bg-[#181D27]" />
-          <div className="flex-1">
-            <p className="text-base font-bold text-[#FDFDFD]">
-              {profile?.counts.likes}
-            </p>
-            <p className="text-[10px] text-[#A4A7AE] uppercase tracking-wider mt-0.5">
-              Likes
-            </p>
-          </div>
-        </div>
-
-        {/* GALLERY TAB CONTAINER HEADER */}
-        <div className="flex items-center w-full h-12 border-b border-[#181D27] mt-4">
-          <button
-            onClick={() => setActiveTab("gallery")}
-            className={`flex-1 h-full flex items-center justify-center gap-2 border-b-2 font-bold text-sm cursor-pointer transition-all ${
-              activeTab === "gallery"
-                ? "border-white text-white"
-                : "border-transparent text-[#A4A7AE]"
-            }`}
-          >
-            <Grid size={16} />
-            <span>Gallery</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("liked")}
-            className={`flex-1 h-full flex items-center justify-center gap-2 border-b-2 font-medium text-sm cursor-pointer transition-all ${
-              activeTab === "liked"
-                ? "border-white text-white"
-                : "border-transparent text-[#A4A7AE]"
-            }`}
-          >
-            <Heart size={16} />
-            <span>Liked</span>
-          </button>
-        </div>
-
-        {/* IMAGES MOCKUP LAYOUT (DIMENSI: 119.15px x 119.15px GAP: 1.78px FIGMA) */}
-        <ProfileTimeline
-          posts={timelinePosts}
-          currentUsername={username}
-          isLoading={timelineLoading}
+    <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
+      <div className="w-full max-w-[361px] flex flex-col gap-4">
+        <ProfileHeader
+          name={user?.name || "User"}
+          username={user?.username || username}
+          avatarUrl={user?.avatarUrl}
         />
-      </div>
-    </div>
-  );
-}
 
-export default function UserProfileDetailPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="w-full h-screen bg-black flex items-center justify-center">
-          <Loader2 className="animate-spin text-[#6936F2]" size={32} />
+        {/* TOMBOL AKSI (EDIT JIKA PEMILIK / FOLLOW JIKA PENGUNJUNG) */}
+        {isLoggedIn ? (
+          isOwner ? (
+            <OwnerActions
+              isOwner={true}
+              onEditProfile={() => router.push("/settings")}
+            />
+          ) : (
+            <VisitorAction
+              isFollowing={isFollowing}
+              onFollowToggle={() => {}}
+            />
+          )
+        ) : (
+          /* Jika belum login, tampilkan tombol follow yang mengarah ke halaman login */
+          <button
+            onClick={() => router.push("/login")}
+            className="w-full h-11 bg-[#7F51F9] hover:bg-[#6936F2] transition-colors text-xs font-bold text-[#FDFDFD] rounded-xl flex items-center justify-center cursor-pointer shadow-md"
+          >
+            Follow
+          </button>
+        )}
+
+        {/* BIO SINGKAT */}
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
+          {user?.bio ||
+            "Creating unforgettable moments! 📸✨ Let's cherish every second together!"}
+        </p>
+
+        {/* STATISTIK PORTFOLIO */}
+        <ProfileStats
+          postCount={postCount}
+          followersCount={followersCount}
+          followingCount={followingCount}
+          likesCount={likesCount}
+        />
+
+        <div className="w-full flex flex-col gap-4 mt-2">
+          {isLoggedIn ? (
+            <>
+              {/* Menu Tab Navigasi Galeri */}
+              <ProfileTabs
+                activeTab={activeTab}
+                viewMode={viewMode}
+                onPostsClick={() => {
+                  if (activeTab === "posts") {
+                    setViewMode((prev) => (prev === "grid" ? "list" : "grid"));
+                  } else {
+                    setActiveTab("posts");
+                  }
+                }}
+                onSavedClick={() => setActiveTab("saved")}
+              />
+
+              {/* Konten Utama Galeri Kiriman */}
+              {activeTab === "posts" ? (
+                userPosts.length === 0 ? (
+                  <ProfileEmptyState
+                    onCreatePost={() => router.push("/create")}
+                  />
+                ) : (
+                  <div className="w-full h-auto animate-fade-in">
+                    <ProfileGallery
+                      posts={userPosts}
+                      viewMode={viewMode}
+                      username={user?.username}
+                      canDelete={isOwner}
+                    />
+                  </div>
+                )
+              ) : (
+                <ProfileSavedGallery posts={savedPosts} />
+              )}
+            </>
+          ) : (
+            /* === KONDISI LANDING WALL: DIKUNCI BAGI USER BELUM LOGIN === */
+            <div className="w-full flex flex-col items-center justify-center py-16 px-6 bg-[#0A0D12] border border-[#181D27] rounded-2xl text-center gap-4 animate-fade-in mt-2">
+              <div className="w-12 h-12 rounded-full bg-zinc-900/50 flex items-center justify-center text-[#7F51F9] border border-[#181D27]">
+                <Lock size={18} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <h3 className="text-base font-bold text-[#FDFDFD] tracking-tight">
+                  Moments are Locked
+                </h3>
+                <p className="text-xs text-[#A4A7AE] max-w-[260px] leading-relaxed">
+                  Sign in or create a Sociality account to explore @{username}
+                  &apos;s moments, saved collections, and full portfolio.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push("/login")}
+                className="mt-2 py-2.5 px-8 bg-[#7F51F9] hover:bg-[#6936F2] text-xs font-bold text-white rounded-full transition-colors cursor-pointer shadow-lg"
+              >
+                Sign in to View Profile
+              </button>
+            </div>
+          )}
         </div>
-      }
-    >
-      <ProfileContent />
-    </Suspense>
+      </div>
+
+      {/* FOOTER BOTTOM NAV BAR */}
+      <BottomNavbar
+        onHome={() => router.push("/feed")}
+        onCreatePost={() => router.push("/create")}
+      />
+    </div>
   );
 }

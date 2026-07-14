@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import SearchBar from "@/components/shared/SearchBar";
 
 export default function NavbarSearch() {
+  console.count("SearchPage");
   const router = useRouter();
   const searchParams = useSearchParams();
 

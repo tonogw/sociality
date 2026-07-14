@@ -20,9 +20,15 @@ interface Props {
   posts: Post[];
   viewMode: "grid" | "list";
   username?: string;
+  canDelete?: boolean;
 }
 
-export default function ProfileGallery({ posts, viewMode, username }: Props) {
+export default function ProfileGallery({
+  posts,
+  viewMode,
+  username,
+  canDelete = false,
+}: Props) {
   if (viewMode === "grid") {
     return (
       <div className="grid grid-cols-3 gap-1 w-full">
@@ -48,7 +54,12 @@ export default function ProfileGallery({ posts, viewMode, username }: Props) {
   return (
     <div className="flex flex-col gap-6 w-full items-center">
       {posts.map((post) => (
-        <TimelineCard key={post.id} post={post} currentUsername={username} />
+        <TimelineCard
+          key={post.id}
+          post={post}
+          currentUsername={username}
+          canDelete={canDelete}
+        />
       ))}
     </div>
   );

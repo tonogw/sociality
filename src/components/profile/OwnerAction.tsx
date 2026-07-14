@@ -2,9 +2,14 @@
 
 interface OwnerActionsProps {
   onEditProfile: () => void;
+  isOwner?: boolean;
 }
 
-export default function OwnerActions({ onEditProfile }: OwnerActionsProps) {
+export default function OwnerActions({
+  onEditProfile,
+  isOwner = true,
+}: OwnerActionsProps) {
+  if (!isOwner) return null;
   return (
     <div className="flex items-center gap-3 w-full h-10">
       <button

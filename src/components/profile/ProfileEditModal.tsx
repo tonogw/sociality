@@ -125,7 +125,7 @@ export default function ProfileEditModal({
             <label className="text-xs font-bold">Phone</label>
 
             <input
-              id="phone"
+              id="telephone"
               {...register("phone")}
               className="w-full mt-1 h-11 rounded-xl border border-[#181D27] bg-[#0A0D12] px-4"
             />
