@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { Loader2, Lock } from "lucide-react";
+import { useState, Suspense } from "react";
+import { Loader2, Share2 } from "lucide-react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import Navbar from "@/components/shared/Navbar";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
 import OwnerActions from "@/components/profile/OwnerAction";
@@ -17,13 +18,31 @@ import VisitorAction from "@/components/profile/VisitorAction";
 import PrivateProfile from "@/components/profile/PrivateProfile";
 
 import { useUser } from "@/queries/users/useUser";
-import { useUserPosts } from "@/queries/users/useUserPosts";
+
 import { useFollow } from "@/queries/users/useFollow";
 import { useUnfollow } from "@/queries/users/useUnfollow";
-import { getIsPrivateFromBio } from "@/lib/utils";
+import { getIsPrivateFromBio, cleanBioText } from "@/lib/utils";
+import type { PostItem } from "@/types/post";
 
-// Impor tipe data terstandarisasi buatan kita
-import { UserProfileData } from "@/types/user";
+export interface UserProfileData {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+  phone: string;
+  bio: string | null;
+  avatarUrl: string | null;
+  isMe?: boolean;
+  isPrivate?: boolean;
+  isFollowing?: boolean;
+  isFollowedByMe?: boolean;
+  counts?: {
+    post: number;
+    followers: number;
+    following: number;
+    likes: number;
+  };
+}
 
 function UserProfileContent() {
   const params = useParams();
@@ -32,47 +51,41 @@ function UserProfileContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const fromQuery = searchParams.get("fromQuery") || "";
+  const lastPage = searchParams.get("lastPage") || "";
+
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "likes">(
     "posts",
   );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-
-  const postIdParam = searchParams.get("postId");
-
-  useEffect(() => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-    const timer = setTimeout(() => {
-      setIsLoggedIn(!!token);
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (postIdParam) {
-      const scrollTimer = setTimeout(() => {
-        setActiveTab("posts");
-        setViewMode("list");
-
-        const targetElement = document.getElementById(`post-${postIdParam}`);
-        if (targetElement) {
-          targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 350);
-
-      return () => clearTimeout(scrollTimer);
+  // const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [isLoggedIn] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return !!localStorage.getItem("token");
     }
-  }, [postIdParam]);
+    return false;
+  });
 
   const { data: profile, isLoading: isProfileLoading } = useUser(username);
-  const { data: postsData, isLoading: isPostsLoading } = useUserPosts(username);
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const hasQueryAccess = isLoggedIn === true && !!username;
+  // 1. GET /api/users/{username}/posts
+  const { data: userPostsData, isLoading: isPostsLoading } = useQuery({
+    queryKey: ["user-posts", username],
+    queryFn: async () => {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${baseUrl}/users/${username}/posts`, {
+        headers: {
+          accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.json();
+    },
+    enabled: !!isLoggedIn && !!username,
+  });
 
+  // 2. GET /api/users/{username}/likes
   const { data: userLikesData } = useQuery({
     queryKey: ["user-likes", username],
     queryFn: async () => {
@@ -83,29 +96,45 @@ function UserProfileContent() {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) throw new Error("Gagal mengambil data kiriman disukai.");
       return res.json();
     },
-    enabled: hasQueryAccess,
+    enabled: !!isLoggedIn && !!username,
   });
 
   const followMutation = useFollow();
   const unfollowMutation = useUnfollow();
 
-  // EXPLICIT CASTING: Mengubah profil menjadi tipe UserProfileData agar linter membaca isFollowedByMe
   const user = profile as UserProfileData | undefined;
-  const userPosts = postsData?.posts ?? [];
-  const likedPosts = userLikesData?.data?.posts ?? userLikesData?.data ?? [];
+
+  // FIX RUNTIME CRASH: Ekstraksi pintar untuk mengamankan array postingan dari berbagai variasi payload objek Swagger
+  const userPosts: PostItem[] = Array.isArray(userPostsData)
+    ? userPostsData
+    : Array.isArray(userPostsData?.data?.items)
+      ? userPostsData.data.items
+      : Array.isArray(userPostsData?.data)
+        ? userPostsData.data
+        : [];
+
+  // Ekstraksi pintar untuk mengamankan array disukai
+  const likedPosts: PostItem[] = Array.isArray(userLikesData)
+    ? userLikesData
+    : Array.isArray(userLikesData?.data?.posts)
+      ? userLikesData.data.posts
+      : Array.isArray(userLikesData?.data)
+        ? userLikesData.data
+        : [];
 
   const isOwner = user?.isMe ?? false;
   const isFollowing = user?.isFollowedByMe ?? user?.isFollowing ?? false;
   const isPrivate = getIsPrivateFromBio(user?.bio);
 
   const stats = user?.counts;
-  const postCount = stats?.post ?? 0;
+  const postCount = stats?.post ?? userPosts.length;
   const followersCount = stats?.followers ?? 0;
   const followingCount = stats?.following ?? 0;
-  const likesCount = stats?.likes ?? 0;
+  const likesCount = stats?.likes ?? likedPosts.length;
+
+  const shouldLockContent = isLoggedIn && !isOwner && isPrivate && !isFollowing;
 
   const handleFollowToggle = () => {
     if (isFollowing) {
@@ -114,9 +143,6 @@ function UserProfileContent() {
           await queryClient.invalidateQueries({ queryKey: ["user", username] });
           toast.success(`Unfollowed @${username}`);
         },
-        onError: () => {
-          toast.error("Failed to unfollow user.");
-        },
       });
     } else {
       followMutation.mutate(username, {
@@ -124,29 +150,25 @@ function UserProfileContent() {
           await queryClient.invalidateQueries({ queryKey: ["user", username] });
           toast.success(`Following @${username}!`);
         },
-        onError: () => {
-          toast.error("Failed to follow user.");
-        },
       });
     }
   };
 
-  const shouldLockContent = isLoggedIn && !isOwner && isPrivate && !isFollowing;
-
-  const handleOpenFollowers = () => {
-    if (shouldLockContent) {
-      toast.error("This account is private. Follow to view followers.");
-      return;
+  const handleShareAccount = async () => {
+    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Profile ${user?.name}`,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.log("Share canceled", err);
+      }
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast.success("Account link successfully copied to clipboard!");
     }
-    router.push(`/${username}/followers`);
-  };
-
-  const handleOpenFollowing = () => {
-    if (shouldLockContent) {
-      toast.error("This account is private. Follow to view following list.");
-      return;
-    }
-    router.push(`/${username}/following`);
   };
 
   if (
@@ -161,40 +183,47 @@ function UserProfileContent() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-[361px] flex flex-col gap-4">
+    <div className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-24 flex flex-col items-center font-sans">
+      <Navbar fromQuery={fromQuery} lastPage={lastPage} />
+
+      <div className="w-full max-w-90.25 flex flex-col gap-4">
+        {/* BARIS-1: AVATAR + DISPLAY NAME */}
         <ProfileHeader
           name={user?.name || "User"}
           username={user?.username || username}
           avatarUrl={user?.avatarUrl}
         />
 
-        {/* TOMBOL AKSI */}
-        {isLoggedIn ? (
-          isOwner ? (
-            <OwnerActions
-              isOwner={true}
-              onEditProfile={() => router.push("/settings")}
-            />
-          ) : (
-            <VisitorAction
-              isFollowing={isFollowing}
-              onFollowToggle={handleFollowToggle}
-            />
-          )
-        ) : (
+        {/* BARIS-2: ACTION BUTTONS */}
+        <div className="w-full flex items-center gap-2">
+          <div className="flex-1">
+            {isOwner ? (
+              <OwnerActions
+                isOwner={true}
+                onEditProfile={() => router.push("/settings")}
+              />
+            ) : (
+              <VisitorAction
+                isFollowing={isFollowing}
+                onFollowToggle={handleFollowToggle}
+              />
+            )}
+          </div>
           <button
-            onClick={() => router.push("/login")}
-            className="w-full h-11 bg-[#7F51F9] hover:bg-[#6936F2] transition-colors text-xs font-bold text-[#FDFDFD] rounded-xl flex items-center justify-center cursor-pointer shadow-md"
+            onClick={handleShareAccount}
+            type="button"
+            className="w-11 h-11 border border-[#181D27] bg-[#0A0D12] text-zinc-400 hover:text-white rounded-xl flex items-center justify-center transition-colors cursor-pointer"
           >
-            Follow
+            <Share2 size={16} />
           </button>
-        )}
+        </div>
 
+        {/* BARIS-3: BIO CAPTION TEXT */}
         <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
-          {user?.bio || "Creating unforgettable moments! 📸✨"}
+          {cleanBioText(user?.bio) || "Moment collector. 📸✨"}
         </p>
 
+        {/* BARIS-4: LINK KLIK STATISTIK KONEKSI */}
         <ProfileStats
           postCount={postCount}
           followersCount={followersCount}
@@ -203,88 +232,62 @@ function UserProfileContent() {
           onPostsClick={() => {
             if (!shouldLockContent) setActiveTab("posts");
           }}
-          onFollowersClick={handleOpenFollowers}
-          onFollowingClick={handleOpenFollowing}
+          onFollowersClick={() => {
+            if (!shouldLockContent) router.push(`/${username}/followers`);
+          }}
+          onFollowingClick={() => {
+            if (!shouldLockContent) router.push(`/${username}/following`);
+          }}
           onLikesClick={() => {
             if (!shouldLockContent) setActiveTab("likes");
           }}
         />
 
+        {/* BARIS-5 & 6: GALLERY RENDERING CONTAINER */}
         <div className="w-full flex flex-col gap-4 mt-2">
-          {isLoggedIn ? (
-            shouldLockContent ? (
-              <PrivateProfile />
-            ) : (
-              <>
-                <ProfileTabs
-                  activeTab={activeTab}
-                  viewMode={viewMode}
-                  onPostsClick={() => {
-                    if (activeTab === "posts") {
-                      setViewMode((prev) =>
-                        prev === "grid" ? "list" : "grid",
-                      );
-                    } else {
-                      setActiveTab("posts");
-                    }
-                  }}
-                  onLikesClick={() => setActiveTab("likes")}
-                />
-
-                {activeTab === "posts" &&
-                  (userPosts.length === 0 ? (
-                    <ProfileEmptyState
-                      onCreatePost={() => router.push("/create")}
-                    />
-                  ) : (
-                    <div className="w-full h-auto animate-fade-in">
-                      <ProfileGallery
-                        posts={userPosts}
-                        viewMode={viewMode}
-                        username={user?.username}
-                        canDelete={isOwner}
-                      />
-                    </div>
-                  ))}
-
-                {activeTab === "likes" &&
-                  (likedPosts.length === 0 ? (
-                    <div className="w-full text-center py-16 text-xs text-zinc-500 font-medium">
-                      This user hasn&apos;t liked any posts yet.
-                    </div>
-                  ) : (
-                    <div className="w-full h-auto animate-fade-in">
-                      <ProfileGallery
-                        posts={likedPosts}
-                        viewMode={viewMode}
-                        username={user?.username}
-                        canDelete={false}
-                      />
-                    </div>
-                  ))}
-              </>
-            )
+          {shouldLockContent ? (
+            <PrivateProfile />
           ) : (
-            <div className="w-full flex flex-col items-center justify-center py-16 px-6 bg-[#0A0D12] border border-[#181D27] rounded-2xl text-center gap-4 animate-fade-in mt-2">
-              <div className="w-12 h-12 rounded-full bg-zinc-900/50 flex items-center justify-center text-[#7F51F9] border border-[#181D27]">
-                <Lock size={18} />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <h3 className="text-base font-bold text-[#FDFDFD] tracking-tight">
-                  Moments are Locked
-                </h3>
-                <p className="text-xs text-[#A4A7AE] max-w-[260px] leading-relaxed">
-                  Sign in or create a Sociality account to explore @{username}
-                  &apos;s moments, saved collections, and full portfolio.
-                </p>
-              </div>
-              <button
-                onClick={() => router.push("/login")}
-                className="mt-2 py-2.5 px-8 bg-[#7F51F9] hover:bg-[#6936F2] text-xs font-bold text-white rounded-full transition-colors cursor-pointer shadow-lg"
-              >
-                Sign in to View Profile
-              </button>
-            </div>
+            <>
+              <ProfileTabs
+                activeTab={activeTab}
+                viewMode={viewMode}
+                onPostsClick={() => {
+                  if (activeTab === "posts") {
+                    setViewMode((prev) => (prev === "grid" ? "list" : "grid"));
+                  } else {
+                    setActiveTab("posts");
+                  }
+                }}
+                onLikesClick={() => setActiveTab("likes")}
+              />
+
+              {activeTab === "posts" &&
+                (userPosts.length === 0 ? (
+                  <ProfileEmptyState onCreatePost={() => {}} />
+                ) : (
+                  <ProfileGallery
+                    posts={userPosts}
+                    viewMode={viewMode}
+                    username={user?.username}
+                    canDelete={isOwner}
+                  />
+                ))}
+
+              {activeTab === "likes" &&
+                (likedPosts.length === 0 ? (
+                  <div className="text-center py-16 text-xs text-zinc-500 font-medium bg-[#0A0D12]/10 border border-dashed border-[#181D27] rounded-2xl">
+                    No liked moments found.
+                  </div>
+                ) : (
+                  <ProfileGallery
+                    posts={likedPosts}
+                    viewMode={viewMode}
+                    username={user?.username}
+                    canDelete={false}
+                  />
+                ))}
+            </>
           )}
         </div>
       </div>

@@ -24,6 +24,14 @@ export const getCleanBio = (bio: string | null | undefined): string => {
 };
 
 /**
+ * Membersihkan string bio dari kode penanda siber metadata agar visual antarmuka pengguna tetap mulus.
+ */
+export function cleanBioText(bio: string | null | undefined): string {
+  if (!bio) return "";
+  return bio.replace(/\[private:true\]/g, "").trim();
+}
+
+/**
  * Menyusun string bio baru dengan membubuhi tag privasi untuk disimpan kembali ke cloud database
  */
 export const generateBioWithPrivacy = (
