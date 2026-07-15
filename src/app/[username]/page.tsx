@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Loader2, Share2 } from "lucide-react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-
+import { userService } from "@/services/userService";
 import Navbar from "@/components/shared/Navbar";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
@@ -22,7 +22,7 @@ import { useUser } from "@/queries/users/useUser";
 import { useFollow } from "@/queries/users/useFollow";
 import { useUnfollow } from "@/queries/users/useUnfollow";
 import { getIsPrivateFromBio, cleanBioText } from "@/lib/utils";
-import type { PostItem } from "@/types/post";
+// import type { PostItem } from "@/types/post";
 
 export interface UserProfileData {
   id: number;
@@ -57,49 +57,83 @@ function UserProfileContent() {
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "likes">(
     "posts",
   );
+
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  // const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const [isLoggedIn] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return !!localStorage.getItem("token");
-    }
-    return false;
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLoggedIn(!!localStorage.getItem("token"));
+  }, []);
+
+  //   if (typeof window !== "undefined") return false;
+  //   return !!localStorage.getItem("token");
+  // });
+
+  // const isLoggedIn =
+  //   typeof window !== "undefined" && !!localStorage.getItem("token");
+
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //     const token = localStorage.getItem("token");
+  //     if (token) {
+  //       const timer = setTimeout=(()=>{
+  //         setIsLoggedIn=(true);
+  //       }, 100);
+  //       setIsLoggedIn(true);
+  //       return () => clearTimeout(timer);
+  //     }
+  //   }
+  // }, []);
+
+  //   return false;
+  // });
 
   const { data: profile, isLoading: isProfileLoading } = useUser(username);
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   // 1. GET /api/users/{username}/posts
   const { data: userPostsData, isLoading: isPostsLoading } = useQuery({
     queryKey: ["user-posts", username],
-    queryFn: async () => {
-      const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${baseUrl}/users/${username}/posts`, {
-        headers: {
-          accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return res.json();
-    },
-    enabled: !!isLoggedIn && !!username,
+    queryFn: () => userService.getUserPosts(username, 1, 20),
+    enabled: !!username,
   });
+
+  // const { data: userPostsData, isLoading: isPostsLoading } = useQuery({
+  //   queryKey: ["user-posts", username],
+  //   queryFn: async () => {
+  //     const token = localStorage.getItem("token") || "";
+  //     const res = await fetch(`${baseUrl}/users/${username}/posts`, {
+  //       headers: {
+  //         accept: "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     return res.json();
+  //   },
+  //   enabled: !!isLoggedIn && !!username,
+  // });
 
   // 2. GET /api/users/{username}/likes
   const { data: userLikesData } = useQuery({
     queryKey: ["user-likes", username],
-    queryFn: async () => {
-      const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${baseUrl}/users/${username}/likes`, {
-        headers: {
-          accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return res.json();
-    },
-    enabled: !!isLoggedIn && !!username,
+    queryFn: () => userService.getUserLikes(username, 1, 20),
+    enabled: !!username,
   });
+  // const { data: userLikesData } = useQuery({
+  //   queryKey: ["user-likes", username],
+  //   queryFn: async () => {
+  //     const token = localStorage.getItem("token") || "";
+  //     const res = await fetch(`${baseUrl}/users/${username}/likes`, {
+  //       headers: {
+  //         accept: "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     return res.json();
+  //   },
+  //   enabled: !!isLoggedIn && !!username,
+  // });
 
   const followMutation = useFollow();
   const unfollowMutation = useUnfollow();
@@ -107,22 +141,40 @@ function UserProfileContent() {
   const user = profile as UserProfileData | undefined;
 
   // FIX RUNTIME CRASH: Ekstraksi pintar untuk mengamankan array postingan dari berbagai variasi payload objek Swagger
-  const userPosts: PostItem[] = Array.isArray(userPostsData)
-    ? userPostsData
-    : Array.isArray(userPostsData?.data?.items)
-      ? userPostsData.data.items
-      : Array.isArray(userPostsData?.data)
-        ? userPostsData.data
-        : [];
+  // const userPosts: PostItem[] = Array.isArray(userPostsData)
+  //   ? userPostsData
+  //   : Array.isArray(userPostsData?.data?.items)
+  //     ? userPostsData.data.items
+  //     : Array.isArray(userPostsData?.data)
+  //       ? userPostsData.data
+  //       : [];
+
+  // const userPosts: PostItem[] =
+  //   userPostsData?.posts ?? [];
+
+  const userPosts = userPostsData?.posts ?? [];
+  const likedPosts = userLikesData?.posts ?? [];
+
+  console.log("PROFILE", profile);
+  console.log("POSTS", userPostsData);
+  console.log("POSTS ARRAY", userPosts);
+  console.log("LIKES", userLikesData);
+
+  // const likedPosts: PostItem[]= userLikesData?.posts ?? [];
 
   // Ekstraksi pintar untuk mengamankan array disukai
-  const likedPosts: PostItem[] = Array.isArray(userLikesData)
-    ? userLikesData
-    : Array.isArray(userLikesData?.data?.posts)
-      ? userLikesData.data.posts
-      : Array.isArray(userLikesData?.data)
-        ? userLikesData.data
-        : [];
+  // const likedPosts: PostItem[] = Array.isArray(userLikesData)
+  //   ? userLikesData
+  //   : Array.isArray(userLikesData?.data?.posts)
+  //     ? userLikesData.data.posts
+  //     : Array.isArray(userLikesData?.data)
+  //       ? userLikesData.data
+  //       : [];
+
+  // const likedPosts: PostItem[]=
+  //   userLikesData?.data?.posts ??
+  //   userLikesData?.data ??
+  //   [];
 
   const isOwner = user?.isMe ?? false;
   const isFollowing = user?.isFollowedByMe ?? user?.isFollowing ?? false;
@@ -134,7 +186,8 @@ function UserProfileContent() {
   const followingCount = stats?.following ?? 0;
   const likesCount = stats?.likes ?? likedPosts.length;
 
-  const shouldLockContent = isLoggedIn && !isOwner && isPrivate && !isFollowing;
+  const shouldLockContent =
+    isLoggedIn === true && !isOwner && isPrivate && !isFollowing;
 
   const handleFollowToggle = () => {
     if (isFollowing) {

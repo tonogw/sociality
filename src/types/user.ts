@@ -1,5 +1,6 @@
 import { PostItem } from "./post";
 import { Pagination } from "./api";
+import { FollowUser } from "./follow";
 
 export interface UserStats {
   posts: number;
@@ -32,6 +33,15 @@ export interface UserProfile {
 export type UserProfileData = UserProfile;
 
 export interface SearchedUser {
+  id: number;
+  username: string;
+  name: string;
+  avatarUrl: string | null;
+  isFollowedByMe: boolean;
+}
+// ternyata sama, bisa di pake search, likes, follow
+// kalo sempat update semua file gunakan interface ini
+export interface UserListItem {
   id: number;
   username: string;
   name: string;
@@ -97,7 +107,7 @@ export interface FollowersResponse {
   success: boolean;
   message: string;
   data: {
-    users: FollowerUsers[];
+    users: FollowUser[];
     pagination: Pagination;
   };
 }
@@ -106,7 +116,7 @@ export interface FollowingResponse {
   success: boolean;
   message: string;
   data: {
-    users: FollowerUsers[];
+    users: FollowUser[];
     pagination: Pagination;
   };
 }

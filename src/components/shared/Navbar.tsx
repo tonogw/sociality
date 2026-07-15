@@ -48,6 +48,32 @@ export default function Navbar({ fromQuery, lastPage }: NavbarProps) {
     );
   }
 
+  const isFollowersRoute = /^\/[^/]+\/followers$/.test(pathname);
+  if (isFollowersRoute) {
+    const username = pathname.split("/")[1];
+
+    return (
+      <NavbarProfile
+        title={`${username} Followers`}
+        fromQuery={fromQuery}
+        lastPage={lastPage}
+      />
+    );
+  }
+
+  const isFollowingRoute = /^\/[^/]+\/following$/.test(pathname);
+  if (isFollowingRoute) {
+    const username = pathname.split("/")[1];
+
+    return (
+      <NavbarProfile
+        title={`${username} Following`}
+        fromQuery={fromQuery}
+        lastPage={lastPage}
+      />
+    );
+  }
+
   if (/^\/[^/]+$/.test(pathname) && !SYSTEM_ROUTES.has(pathname)) {
     return (
       <NavbarProfile

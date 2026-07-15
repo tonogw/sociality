@@ -6,6 +6,7 @@ export interface Follow {
   };
 }
 
+// coba di remap untuk profileHeader, username/page, dsb
 export interface FollowUser {
   id: number;
   username: string;
