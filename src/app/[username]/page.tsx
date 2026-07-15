@@ -108,14 +108,20 @@ function UserProfileContent() {
     if (isFollowing) {
       unfollowMutation.mutate(username, {
         onSuccess: async () => {
-          await queryClient.invalidateQueries({ queryKey: ["user", username] });
+          // await queryClient.invalidateQueries({ queryKey: ["user", username] });
+          await queryClient.refetchQueries({
+            queryKey: ["user", username],
+          });
           toast.success(`Unfollowed @${username}`);
         },
       });
     } else {
       followMutation.mutate(username, {
         onSuccess: async () => {
-          await queryClient.invalidateQueries({ queryKey: ["user", username] });
+          // await queryClient.invalidateQueries({ queryKey: ["user", username] });
+          await queryClient.refetchQueries({
+            queryKey: ["user", username],
+          });
           toast.success(`Following @${username}!`);
         },
       });
