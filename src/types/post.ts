@@ -12,6 +12,18 @@ import { Pagination } from "./api";
 //   likedByMe: boolean;
 // }
 
+export interface PostItem {
+  id: number;
+  imageUrl: string;
+  caption?: string;
+  createdAt: string;
+  likeCount?: number;
+  commentCount?: number;
+  likedByMe?: boolean;
+  savedByMe?: boolean;
+  author?: AuthorItem;
+}
+
 export interface AuthorItem {
   id: number;
   username: string;
@@ -81,18 +93,6 @@ export interface AuthorItem {
   username: string;
   name: string;
   avatarUrl: string | null;
-}
-
-export interface PostItem {
-  id: number;
-  imageUrl: string;
-  caption?: string;
-  createdAt: string;
-  likeCount?: number;
-  commentCount?: number;
-  likedByMe?: boolean;
-  savedByMe?: boolean;
-  author?: AuthorItem;
 }
 
 export interface PostResponse {

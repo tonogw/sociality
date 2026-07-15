@@ -43,7 +43,8 @@ export default function BottomNavbar({
         <div className="w-6 h-6 rounded-full overflow-hidden relative border border-zinc-700">
           {avatarUrl ? (
             <Image
-              src={avatarUrl}
+              // src={avatarUrl}
+              src="/icons/icon-profile.svg"
               alt="profile"
               width={32}
               height={32}

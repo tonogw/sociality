@@ -3,6 +3,8 @@
 import { useState, useEffect, Suspense } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
@@ -10,30 +12,35 @@ import OwnerActions from "@/components/profile/OwnerAction";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import ProfileGallery from "@/components/profile/ProfileGallery";
 import ProfileEmptyState from "@/components/profile/ProfileEmptyState";
-import ProfileSavedGallery from "@/components/profile/ProfileSavedGallery";
 import BottomNavbar from "@/components/shared/BottomNavbar";
 import VisitorAction from "@/components/profile/VisitorAction";
+import PrivateProfile from "@/components/profile/PrivateProfile";
 
-// Import kueri khusus React Query dari folder queries Anda
 import { useUser } from "@/queries/users/useUser";
 import { useUserPosts } from "@/queries/users/useUserPosts";
-import { useUserLikes } from "@/queries/users/useUserLikes";
+import { useFollow } from "@/queries/users/useFollow";
+import { useUnfollow } from "@/queries/users/useUnfollow";
+import { getIsPrivateFromBio } from "@/lib/utils";
+
+// Impor tipe data terstandarisasi buatan kita
+import { UserProfileData } from "@/types/user";
 
 function UserProfileContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const username = params.username as string;
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "likes">(
+    "posts",
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  /* STREAMING_CHUNK: Extracting search parameters and handling authentication logic */
   const postIdParam = searchParams.get("postId");
 
   useEffect(() => {
-    // Deteksi keberadaan token di localStorage secara aman di client-side
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -44,58 +51,103 @@ function UserProfileContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  /* STREAMING_CHUNK: Fetching user details and processing subsequent auto-scrolling */
   useEffect(() => {
-    // FIX: Jika ada parameter postId, otomatis ubah mode tampilan ke LIST dan scroll ke sasaran
-    // if (postIdParam) {
-    //   setActiveTab("posts");
-    //   setViewMode("list");
-
-    //   const scrollTimer = setTimeout(() => {
-    //     const targetElement = document.getElementById(`post-${postIdParam}`);
-    //     if (targetElement) {
-    //       targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-    //     }
-    //   }, 350); // Delay sedikit agar render TimelineCard selesai sepenuhnya
-
-    //   return () => clearTimeout(scrollTimer);
-    // }
-
     if (postIdParam) {
       const scrollTimer = setTimeout(() => {
         setActiveTab("posts");
         setViewMode("list");
 
-        // Jalankan pencarian elemen dan scroll setelah state ter-update
         const targetElement = document.getElementById(`post-${postIdParam}`);
         if (targetElement) {
           targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-      }, 350); // Memberikan jeda waktu ideal bagi render DOM
+      }, 350);
 
       return () => clearTimeout(scrollTimer);
     }
   }, [postIdParam]);
 
-  // Memanggil React Query secara kondisional
   const { data: profile, isLoading: isProfileLoading } = useUser(username);
   const { data: postsData, isLoading: isPostsLoading } = useUserPosts(username);
-  const { data: likesData } = useUserLikes(username);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // Normalisasi data dari API agar tidak menghasilkan status "undefined"
-  const user = profile;
+  const hasQueryAccess = isLoggedIn === true && !!username;
+
+  const { data: userLikesData } = useQuery({
+    queryKey: ["user-likes", username],
+    queryFn: async () => {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${baseUrl}/users/${username}/likes`, {
+        headers: {
+          accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Gagal mengambil data kiriman disukai.");
+      return res.json();
+    },
+    enabled: hasQueryAccess,
+  });
+
+  const followMutation = useFollow();
+  const unfollowMutation = useUnfollow();
+
+  // EXPLICIT CASTING: Mengubah profil menjadi tipe UserProfileData agar linter membaca isFollowedByMe
+  const user = profile as UserProfileData | undefined;
   const userPosts = postsData?.posts ?? [];
-  const savedPosts = likesData?.posts ?? [];
+  const likedPosts = userLikesData?.data?.posts ?? userLikesData?.data ?? [];
 
   const isOwner = user?.isMe ?? false;
-  const isFollowing = user?.isFollowing ?? false;
+  const isFollowing = user?.isFollowedByMe ?? user?.isFollowing ?? false;
+  const isPrivate = getIsPrivateFromBio(user?.bio);
 
-  // Mendapatkan data statistik pengikut & kiriman secara aman
   const stats = user?.counts;
   const postCount = stats?.post ?? 0;
   const followersCount = stats?.followers ?? 0;
   const followingCount = stats?.following ?? 0;
   const likesCount = stats?.likes ?? 0;
+
+  const handleFollowToggle = () => {
+    if (isFollowing) {
+      unfollowMutation.mutate(username, {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ["user", username] });
+          toast.success(`Unfollowed @${username}`);
+        },
+        onError: () => {
+          toast.error("Failed to unfollow user.");
+        },
+      });
+    } else {
+      followMutation.mutate(username, {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ["user", username] });
+          toast.success(`Following @${username}!`);
+        },
+        onError: () => {
+          toast.error("Failed to follow user.");
+        },
+      });
+    }
+  };
+
+  const shouldLockContent = isLoggedIn && !isOwner && isPrivate && !isFollowing;
+
+  const handleOpenFollowers = () => {
+    if (shouldLockContent) {
+      toast.error("This account is private. Follow to view followers.");
+      return;
+    }
+    router.push(`/${username}/followers`);
+  };
+
+  const handleOpenFollowing = () => {
+    if (shouldLockContent) {
+      toast.error("This account is private. Follow to view following list.");
+      return;
+    }
+    router.push(`/${username}/following`);
+  };
 
   if (
     isLoggedIn === null ||
@@ -110,7 +162,7 @@ function UserProfileContent() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-90.25 flex flex-col gap-4">
+      <div className="w-full max-w-[361px] flex flex-col gap-4">
         <ProfileHeader
           name={user?.name || "User"}
           username={user?.username || username}
@@ -127,7 +179,7 @@ function UserProfileContent() {
           ) : (
             <VisitorAction
               isFollowing={isFollowing}
-              onFollowToggle={() => {}}
+              onFollowToggle={handleFollowToggle}
             />
           )
         ) : (
@@ -139,59 +191,80 @@ function UserProfileContent() {
           </button>
         )}
 
-        {/* BIO */}
-        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-words">
-          {user?.bio ||
-            "Creating unforgettable moments! 📸✨ Let's cherish every second together!"}
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
+          {user?.bio || "Creating unforgettable moments! 📸✨"}
         </p>
 
-        {/* STATISTIK */}
         <ProfileStats
           postCount={postCount}
           followersCount={followersCount}
           followingCount={followingCount}
           likesCount={likesCount}
+          onPostsClick={() => {
+            if (!shouldLockContent) setActiveTab("posts");
+          }}
+          onFollowersClick={handleOpenFollowers}
+          onFollowingClick={handleOpenFollowing}
+          onLikesClick={() => {
+            if (!shouldLockContent) setActiveTab("likes");
+          }}
         />
 
         <div className="w-full flex flex-col gap-4 mt-2">
           {isLoggedIn ? (
-            <>
-              {/* Menu Tab Navigasi Galeri */}
-              <ProfileTabs
-                activeTab={activeTab}
-                viewMode={viewMode}
-                onPostsClick={() => {
-                  if (activeTab === "posts") {
-                    setViewMode((prev) => (prev === "grid" ? "list" : "grid"));
-                  } else {
-                    setActiveTab("posts");
-                  }
-                }}
-                onSavedClick={() => setActiveTab("saved")}
-              />
+            shouldLockContent ? (
+              <PrivateProfile />
+            ) : (
+              <>
+                <ProfileTabs
+                  activeTab={activeTab}
+                  viewMode={viewMode}
+                  onPostsClick={() => {
+                    if (activeTab === "posts") {
+                      setViewMode((prev) =>
+                        prev === "grid" ? "list" : "grid",
+                      );
+                    } else {
+                      setActiveTab("posts");
+                    }
+                  }}
+                  onLikesClick={() => setActiveTab("likes")}
+                />
 
-              {/* Konten Utama Galeri Kiriman */}
-              {activeTab === "posts" ? (
-                userPosts.length === 0 ? (
-                  <ProfileEmptyState
-                    onCreatePost={() => router.push("/create")}
-                  />
-                ) : (
-                  <div className="w-full h-auto animate-fade-in">
-                    <ProfileGallery
-                      posts={userPosts}
-                      viewMode={viewMode}
-                      username={user?.username}
-                      canDelete={isOwner}
+                {activeTab === "posts" &&
+                  (userPosts.length === 0 ? (
+                    <ProfileEmptyState
+                      onCreatePost={() => router.push("/create")}
                     />
-                  </div>
-                )
-              ) : (
-                <ProfileSavedGallery posts={savedPosts} />
-              )}
-            </>
+                  ) : (
+                    <div className="w-full h-auto animate-fade-in">
+                      <ProfileGallery
+                        posts={userPosts}
+                        viewMode={viewMode}
+                        username={user?.username}
+                        canDelete={isOwner}
+                      />
+                    </div>
+                  ))}
+
+                {activeTab === "likes" &&
+                  (likedPosts.length === 0 ? (
+                    <div className="w-full text-center py-16 text-xs text-zinc-500 font-medium">
+                      This user hasn&apos;t liked any posts yet.
+                    </div>
+                  ) : (
+                    <div className="w-full h-auto animate-fade-in">
+                      <ProfileGallery
+                        posts={likedPosts}
+                        viewMode={viewMode}
+                        username={user?.username}
+                        canDelete={false}
+                      />
+                    </div>
+                  ))}
+              </>
+            )
           ) : (
-            /* === KONDISI LANDING WALL: DIKUNCI BAGI USER BELUM LOGIN === */
             <div className="w-full flex flex-col items-center justify-center py-16 px-6 bg-[#0A0D12] border border-[#181D27] rounded-2xl text-center gap-4 animate-fade-in mt-2">
               <div className="w-12 h-12 rounded-full bg-zinc-900/50 flex items-center justify-center text-[#7F51F9] border border-[#181D27]">
                 <Lock size={18} />
@@ -200,7 +273,7 @@ function UserProfileContent() {
                 <h3 className="text-base font-bold text-[#FDFDFD] tracking-tight">
                   Moments are Locked
                 </h3>
-                <p className="text-xs text-[#A4A7AE] max-w-65 leading-relaxed">
+                <p className="text-xs text-[#A4A7AE] max-w-[260px] leading-relaxed">
                   Sign in or create a Sociality account to explore @{username}
                   &apos;s moments, saved collections, and full portfolio.
                 </p>
@@ -216,10 +289,9 @@ function UserProfileContent() {
         </div>
       </div>
 
-      {/* FOOTER BOTTOM NAV BAR */}
       <BottomNavbar
         onHome={() => router.push("/feed")}
-        onCreatePost={() => router.push("/create")}
+        onCreatePost={() => router.push("/me")}
         onProfile={() => router.push("/me")}
         avatarUrl={user?.avatarUrl}
       />
@@ -227,7 +299,6 @@ function UserProfileContent() {
   );
 }
 
-// 📦 EXPORT DENGAN BOUNDARY SUSPENSE UNTUK MENJAGA NEXT.JS STATIC OPTIMIZATION
 export default function UserProfilePage() {
   return (
     <Suspense

@@ -25,6 +25,7 @@ import VisitorAction from "@/components/profile/VisitorAction";
 
 import { meService } from "@/services/meService";
 import type { PostItem } from "@/types/post";
+import { getCleanBio } from "@/lib/utils";
 
 interface ApiErrorResponse {
   message?: string;
@@ -47,7 +48,9 @@ export default function MyProfilePage() {
   const router = useRouter();
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "likes">(
+    "posts",
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,6 +81,22 @@ export default function MyProfilePage() {
     },
   });
 
+  // Fetch riil liked posts saya (GET /api/me/likes)
+  const { data: likesResponse } = useQuery({
+    queryKey: ["my-likes"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${baseUrl}/me/likes`, {
+        headers: {
+          accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Gagal mengambil data kiriman disukai.");
+      return res.json();
+    },
+  });
+
   const user = profileData?.data?.profile as ProfileStateData | undefined;
   const isOwner = true;
   const stats = profileData?.data?.stats;
@@ -91,6 +110,7 @@ export default function MyProfilePage() {
   const userPosts =
     user?.posts && user.posts.length > 0 ? user.posts : backupPost;
   const savedPosts = user?.saved || [];
+  const likedPosts = likesResponse?.data?.posts ?? likesResponse?.data ?? [];
 
   const {
     register,
@@ -108,7 +128,7 @@ export default function MyProfilePage() {
         username: user.username || "",
         email: user.email || "",
         phone: user.phone || "",
-        bio: user.bio || "",
+        bio: getCleanBio(user.bio), // Inisialisasi form edit dengan bio bersih
         avatarUrl: user.avatarUrl || "",
       });
     }
@@ -144,11 +164,13 @@ export default function MyProfilePage() {
     }
   };
 
-  // FIX TYPE ERROR: Mengubah fungsi menjadi async Promise<void> agar lolos validasi tipe onUpload
   const handleAvatarCropped = async (
     croppedFile: File,
-    // caption?: string,
+    caption?: string,
   ): Promise<void> => {
+    if (caption) {
+      console.log("Caption disembunyikan untuk proses potong avatar:", caption);
+    }
     setSelectedAvatarFile(croppedFile);
     setPreviewAvatarUrl(URL.createObjectURL(croppedFile));
     setIsAvatarCropOpen(false);
@@ -156,11 +178,19 @@ export default function MyProfilePage() {
   };
 
   const onSubmit = (data: UpdateUserInput) => {
+    // Pertahankan tag status privasi saat mengedit profil dari edit modal
+    const isCurrentlyPrivate = user?.bio
+      ? user.bio.includes("[private:true]")
+      : false;
+    const finalBio = isCurrentlyPrivate
+      ? `${data.bio} [private:true]`.trim()
+      : data.bio;
+
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("username", data.username);
     formData.append("phone", data.phone);
-    if (data.bio) formData.append("bio", data.bio);
+    if (finalBio) formData.append("bio", finalBio);
     if (data.avatarUrl) formData.append("avatarUrl", data.avatarUrl);
 
     if (selectedAvatarFile) {
@@ -218,7 +248,7 @@ export default function MyProfilePage() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-90.25 flex flex-col gap-4">
+      <div className="w-full max-w-[361px] flex flex-col gap-4">
         <ProfileHeader
           name={user?.name}
           username={user?.username}
@@ -235,8 +265,9 @@ export default function MyProfilePage() {
           <VisitorAction isFollowing={false} onFollowToggle={() => {}} />
         )}
 
-        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-words">
-          {user?.bio || "Creating unforgettable moments! 📸✨"}
+        {/* UI BIO BERSIH: Menampilkan Bio tanpa tag rahasia [private:true] */}
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
+          {getCleanBio(user?.bio) || "Creating unforgettable moments! 📸✨"}
         </p>
 
         <ProfileStats
@@ -244,6 +275,10 @@ export default function MyProfilePage() {
           followersCount={followersCount}
           followingCount={followingCount}
           likesCount={likesCount}
+          onPostsClick={() => setActiveTab("posts")}
+          onFollowersClick={() => router.push("/me/followers")}
+          onFollowingClick={() => router.push("/me/following")}
+          onLikesClick={() => setActiveTab("likes")}
         />
 
         <div className="w-full flex flex-col gap-4 mt-2">
@@ -258,10 +293,11 @@ export default function MyProfilePage() {
               }
             }}
             onSavedClick={() => setActiveTab("saved")}
+            onLikesClick={() => setActiveTab("likes")}
           />
 
-          {activeTab === "posts" ? (
-            userPosts.length === 0 ? (
+          {activeTab === "posts" &&
+            (userPosts.length === 0 ? (
               <ProfileEmptyState
                 onCreatePost={() => setIsCreatePostOpen(true)}
               />
@@ -274,14 +310,28 @@ export default function MyProfilePage() {
                   canDelete={isOwner}
                 />
               </div>
-            )
-          ) : (
-            <ProfileSavedGallery posts={savedPosts} />
-          )}
+            ))}
+
+          {activeTab === "saved" && <ProfileSavedGallery posts={savedPosts} />}
+
+          {activeTab === "likes" &&
+            (likedPosts.length === 0 ? (
+              <div className="w-full text-center py-16 text-xs text-zinc-500 font-medium">
+                No liked posts yet. Start double tapping moments!
+              </div>
+            ) : (
+              <div className="w-full h-auto animate-fade-in">
+                <ProfileGallery
+                  posts={likedPosts}
+                  viewMode={viewMode}
+                  username={user?.username}
+                  canDelete={false}
+                />
+              </div>
+            ))}
         </div>
       </div>
 
-      {/* FIX ROUTING HOME KEMBALI KE /feed KARENA RUMAHNYA AKAN KITA BANGUN */}
       <BottomNavbar
         onHome={() => router.push("/feed")}
         onCreatePost={() => setIsCreatePostOpen(true)}

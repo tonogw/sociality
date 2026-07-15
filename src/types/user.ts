@@ -1,22 +1,35 @@
+import { PostItem } from "./post";
 import { Pagination } from "./api";
 
-export interface UserProfileData {
+export interface UserStats {
+  posts: number;
+  followers: number;
+  following: number;
+  likes: number;
+}
+
+export interface UserProfile {
   id: number;
   username: string;
   name: string;
-  avatarUrl: string | null;
-  bio?: string;
   email: string;
   phone: string;
-  counts: {
+  bio: string | null;
+  avatarUrl: string | null;
+  isMe?: boolean;
+  isPrivate?: boolean;
+  isFollowing?: boolean;
+  isFollowedByMe?: boolean; // Relasi follow kustom penyeimbang Swagger
+  counts?: {
     post: number;
     followers: number;
     following: number;
     likes: number;
   };
-  isFollowing: boolean;
-  isMe: boolean;
 }
+
+// Menggunakan perluasan interface langsung untuk NoInfer compatibilities
+export type UserProfileData = UserProfile;
 
 export interface SearchedUser {
   id: number;
@@ -24,6 +37,43 @@ export interface SearchedUser {
   name: string;
   avatarUrl: string | null;
   isFollowedByMe: boolean;
+}
+
+export interface UserProfileResponse {
+  success: boolean;
+  message: string;
+  data: {
+    profile: UserProfile;
+    stats: UserStats;
+  };
+}
+
+export interface OtherUserProfileResponse {
+  success: boolean;
+  message: string;
+  data: UserProfile;
+}
+
+export interface FollowResponse {
+  success: boolean;
+  message: string;
+  data: {
+    following: boolean | null;
+  };
+}
+
+export interface ConnectionListResponse {
+  success: boolean;
+  message: string;
+  data: {
+    users: PostItem[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
 }
 
 export interface SearchUsersResponse {
@@ -59,12 +109,4 @@ export interface FollowingResponse {
     users: FollowerUsers[];
     pagination: Pagination;
   };
-}
-
-export interface ProfileViewModel {
-  profile: string;
-  posts: string;
-  stats: string;
-  isOwner: boolean;
-  isFollowing: boolean;
 }
