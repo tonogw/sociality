@@ -54,8 +54,8 @@ function UserProfileContent() {
   const fromQuery = searchParams.get("fromQuery") || "";
   const lastPage = searchParams.get("lastPage") || "";
 
-  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "likes">(
-    "posts",
+  const [activeTab, setActiveTab] = useState<"feed" | "saved" | "likes">(
+    "feed",
   );
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -272,7 +272,7 @@ function UserProfileContent() {
         </div>
 
         {/* BARIS-3: BIO CAPTION TEXT */}
-        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full break-words">
+        <p className="text-sm text-[#FDFDFD] leading-relaxed max-w-full wrap-break-words">
           {cleanBioText(user?.bio) || "Moment collector. 📸✨"}
         </p>
 
@@ -283,7 +283,7 @@ function UserProfileContent() {
           followingCount={followingCount}
           likesCount={likesCount}
           onPostsClick={() => {
-            if (!shouldLockContent) setActiveTab("posts");
+            if (!shouldLockContent) setActiveTab("feed");
           }}
           onFollowersClick={() => {
             if (!shouldLockContent) router.push(`/${username}/followers`);
@@ -306,16 +306,16 @@ function UserProfileContent() {
                 activeTab={activeTab}
                 viewMode={viewMode}
                 onPostsClick={() => {
-                  if (activeTab === "posts") {
+                  if (activeTab === "feed") {
                     setViewMode((prev) => (prev === "grid" ? "list" : "grid"));
                   } else {
-                    setActiveTab("posts");
+                    setActiveTab("feed");
                   }
                 }}
                 onLikesClick={() => setActiveTab("likes")}
               />
 
-              {activeTab === "posts" &&
+              {/* {activeTab === "feed" &&
                 (userPosts.length === 0 ? (
                   <ProfileEmptyState onCreatePost={() => {}} />
                 ) : (
@@ -325,7 +325,7 @@ function UserProfileContent() {
                     username={user?.username}
                     canDelete={isOwner}
                   />
-                ))}
+                ))} */}
 
               {activeTab === "likes" &&
                 (likedPosts.length === 0 ? (

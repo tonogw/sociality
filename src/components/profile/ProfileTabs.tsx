@@ -3,7 +3,7 @@
 import { Grid, Bookmark, Heart } from "lucide-react";
 
 interface ProfileTabsProps {
-  activeTab: "posts" | "saved" | "likes";
+  activeTab: "feed" | "saved" | "likes";
   viewMode: "grid" | "list";
   onPostsClick: () => void;
   onSavedClick?: () => void;
@@ -23,7 +23,7 @@ export default function ProfileTabs({
       <button
         onClick={onPostsClick}
         className={`flex-1 h-full flex items-center justify-center gap-2 font-bold text-xs border-b-2 transition-all cursor-pointer ${
-          activeTab === "posts"
+          activeTab === "feed"
             ? "border-[#FDFDFD] text-[#FDFDFD]"
             : "border-transparent text-[#A4A7AE]"
         }`}
@@ -31,12 +31,12 @@ export default function ProfileTabs({
         <Grid
           size={16}
           className={
-            viewMode === "list" && activeTab === "posts" ? "text-[#6936F2]" : ""
+            viewMode === "list" && activeTab === "feed" ? "text-[#6936F2]" : ""
           }
         />
         <span>
           Gallery{" "}
-          {viewMode === "list" && activeTab === "posts" ? "(Feed)" : "(Grid)"}
+          {viewMode === "list" && activeTab === "feed" ? "(Feed)" : "(Grid)"}
         </span>
       </button>
 

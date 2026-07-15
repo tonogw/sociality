@@ -70,7 +70,7 @@ export default function PersonalFeedPage() {
                 Your timeline looks quiet.
               </p>
               <button
-                onClick={() => router.push("/posts")}
+                onClick={() => router.push("/feed")}
                 className="text-xs font-bold text-[#6936F2] hover:underline"
               >
                 Explore global moments to find creators!

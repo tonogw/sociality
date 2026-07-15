@@ -1,14 +1,15 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { userService } from "@/services/userService";
 import UserListCard from "@/components/profile/UserListCard";
+import Navbar from "@/components/shared/Navbar";
 
 export default function FollowingPage() {
-  const router = useRouter();
+  // const router = useRouter();
   const params = useParams();
 
   const username = params.username as string;
@@ -31,16 +32,9 @@ export default function FollowingPage() {
 
   return (
     <div className="min-h-screen bg-black px-4 pt-20 pb-10 text-white flex justify-center">
+      <Navbar />
       <div className="w-full max-w-[361px] flex flex-col gap-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="text-zinc-400 hover:text-white"
-          >
-            <ArrowLeft size={18} />
-          </button>
-
           <h1 className="text-lg font-bold">Following</h1>
         </div>
 
