@@ -66,29 +66,6 @@ function UserProfileContent() {
     setIsLoggedIn(!!localStorage.getItem("token"));
   }, []);
 
-  //   if (typeof window !== "undefined") return false;
-  //   return !!localStorage.getItem("token");
-  // });
-
-  // const isLoggedIn =
-  //   typeof window !== "undefined" && !!localStorage.getItem("token");
-
-  // useEffect(() => {
-  //   if (typeof window !== "undefined") {
-  //     const token = localStorage.getItem("token");
-  //     if (token) {
-  //       const timer = setTimeout=(()=>{
-  //         setIsLoggedIn=(true);
-  //       }, 100);
-  //       setIsLoggedIn(true);
-  //       return () => clearTimeout(timer);
-  //     }
-  //   }
-  // }, []);
-
-  //   return false;
-  // });
-
   const { data: profile, isLoading: isProfileLoading } = useUser(username);
   // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -99,82 +76,20 @@ function UserProfileContent() {
     enabled: !!username,
   });
 
-  // const { data: userPostsData, isLoading: isPostsLoading } = useQuery({
-  //   queryKey: ["user-posts", username],
-  //   queryFn: async () => {
-  //     const token = localStorage.getItem("token") || "";
-  //     const res = await fetch(`${baseUrl}/users/${username}/posts`, {
-  //       headers: {
-  //         accept: "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     return res.json();
-  //   },
-  //   enabled: !!isLoggedIn && !!username,
-  // });
-
   // 2. GET /api/users/{username}/likes
   const { data: userLikesData } = useQuery({
     queryKey: ["user-likes", username],
     queryFn: () => userService.getUserLikes(username, 1, 20),
     enabled: !!username,
   });
-  // const { data: userLikesData } = useQuery({
-  //   queryKey: ["user-likes", username],
-  //   queryFn: async () => {
-  //     const token = localStorage.getItem("token") || "";
-  //     const res = await fetch(`${baseUrl}/users/${username}/likes`, {
-  //       headers: {
-  //         accept: "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     return res.json();
-  //   },
-  //   enabled: !!isLoggedIn && !!username,
-  // });
 
   const followMutation = useFollow();
   const unfollowMutation = useUnfollow();
 
   const user = profile as UserProfileData | undefined;
 
-  // FIX RUNTIME CRASH: Ekstraksi pintar untuk mengamankan array postingan dari berbagai variasi payload objek Swagger
-  // const userPosts: PostItem[] = Array.isArray(userPostsData)
-  //   ? userPostsData
-  //   : Array.isArray(userPostsData?.data?.items)
-  //     ? userPostsData.data.items
-  //     : Array.isArray(userPostsData?.data)
-  //       ? userPostsData.data
-  //       : [];
-
-  // const userPosts: PostItem[] =
-  //   userPostsData?.posts ?? [];
-
   const userPosts = userPostsData?.posts ?? [];
   const likedPosts = userLikesData?.posts ?? [];
-
-  console.log("PROFILE", profile);
-  console.log("POSTS", userPostsData);
-  console.log("POSTS ARRAY", userPosts);
-  console.log("LIKES", userLikesData);
-
-  // const likedPosts: PostItem[]= userLikesData?.posts ?? [];
-
-  // Ekstraksi pintar untuk mengamankan array disukai
-  // const likedPosts: PostItem[] = Array.isArray(userLikesData)
-  //   ? userLikesData
-  //   : Array.isArray(userLikesData?.data?.posts)
-  //     ? userLikesData.data.posts
-  //     : Array.isArray(userLikesData?.data)
-  //       ? userLikesData.data
-  //       : [];
-
-  // const likedPosts: PostItem[]=
-  //   userLikesData?.data?.posts ??
-  //   userLikesData?.data ??
-  //   [];
 
   const isOwner = user?.isMe ?? false;
   const isFollowing = user?.isFollowedByMe ?? user?.isFollowing ?? false;
@@ -215,9 +130,7 @@ function UserProfileContent() {
           title: `Profile ${user?.name}`,
           url: shareUrl,
         });
-      } catch (err) {
-        console.log("Share canceled", err);
-      }
+      } catch {}
     } else {
       navigator.clipboard.writeText(shareUrl);
       toast.success("Account link successfully copied to clipboard!");
@@ -315,7 +228,7 @@ function UserProfileContent() {
                 onLikesClick={() => setActiveTab("likes")}
               />
 
-              {/* {activeTab === "feed" &&
+              {activeTab === "saved" &&
                 (userPosts.length === 0 ? (
                   <ProfileEmptyState onCreatePost={() => {}} />
                 ) : (
@@ -325,7 +238,7 @@ function UserProfileContent() {
                     username={user?.username}
                     canDelete={isOwner}
                   />
-                ))} */}
+                ))}
 
               {activeTab === "likes" &&
                 (likedPosts.length === 0 ? (
