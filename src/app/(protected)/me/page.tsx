@@ -83,7 +83,7 @@ export default function MyProfilePage() {
 
   const savedPosts = meSavedData?.data.posts ?? [];
 
-  const likedPosts = meLikesData?.data.items ?? [];
+  const likedPosts = meLikesData?.data.posts ?? [];
 
   const postCount = stats?.posts ?? mePosts.length;
 
@@ -158,7 +158,6 @@ export default function MyProfilePage() {
     caption?: string,
   ): Promise<void> => {
     if (caption) {
-      console.log(caption);
     }
 
     setSelectedAvatarFile(croppedFile);

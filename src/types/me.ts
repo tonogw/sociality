@@ -142,11 +142,20 @@ export interface MySavedResponse {
   };
 }
 
+// export interface MyLikesResponse {
+//   success: boolean;
+//   message: string;
+//   data: {
+//     items: PostItem[];
+//     pagination: Pagination;
+//   };
+// }
+
 export interface MyLikesResponse {
   success: boolean;
   message: string;
   data: {
-    items: PostItem[];
+    posts: PostItem[];
     pagination: Pagination;
   };
 }
