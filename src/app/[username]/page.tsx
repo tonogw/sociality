@@ -158,7 +158,7 @@ function UserProfileContent() {
     <div className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-24 flex flex-col items-center font-sans">
       <Navbar fromQuery={fromQuery} lastPage={lastPage} />
 
-      <div className="w-full max-w-90.25 flex flex-col gap-4">
+      <div className="w-full max-w-90.25 lg:max-w-150 flex flex-col gap-4">
         {/* BARIS-1: AVATAR + DISPLAY NAME */}
         <ProfileHeader
           name={user?.name || "User"}

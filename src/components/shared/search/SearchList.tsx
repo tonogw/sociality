@@ -205,7 +205,7 @@ export default function SearchList() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-98.25 flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-98.25 lg:max-w-150 flex-col gap-4">
       {users.map((user) => (
         <SearchUserCard
           key={user.id}

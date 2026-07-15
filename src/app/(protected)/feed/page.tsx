@@ -51,7 +51,7 @@ export default function PersonalFeedPage() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-20 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-90.25 flex flex-col gap-6">
+      <div className="w-full max-w-90.25 lg:max-w-150 flex flex-col gap-6">
         {/* HEADER BRANDING MINI */}
         <div className="w-full flex items-center gap-2 border-b border-[#181D27] pb-3 px-1 mt-2">
           <div className="text-[#6936F2]">

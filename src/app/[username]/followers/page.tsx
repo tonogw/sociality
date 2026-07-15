@@ -33,7 +33,7 @@ export default function FollowersPage() {
   return (
     <div className="min-h-screen bg-black px-4 pt-20 pb-10 text-white flex justify-center">
       <Navbar />
-      <div className="w-full max-w-[361px] flex flex-col gap-6">
+      <div className="w-full max-w-90.25 lg:max-w-150 flex flex-col gap-6">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold">Followers</h1>
         </div>

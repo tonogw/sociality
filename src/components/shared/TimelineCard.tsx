@@ -76,7 +76,7 @@ export default function TimelineCard({
   return (
     <div
       id={`post-${post.id}`}
-      className="w-full max-w-90.25 bg-[#0A0D12]/20 border-b border-[#181D27] pb-6 flex flex-col gap-3 font-sans animate-fade-in mx-auto"
+      className="w-full max-w-90. lg:max-w-150 bg-[#0A0D12]/20 border-b border-[#181D27] pb-6 flex flex-col gap-3 font-sans animate-fade-in mx-auto"
     >
       {/* 1. TOP BAR: AUTHOR PROFILE INFORMATION */}
       <div className="w-full flex items-center justify-between px-1">

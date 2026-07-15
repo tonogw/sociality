@@ -81,7 +81,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col items-center pt-8 px-4 pb-20">
-      <div className="w-full max-w-[393px] flex flex-col gap-6">
+      <div className="w-full max-w-[393px] lg:max-w-150 flex flex-col gap-6">
         <div className="w-full flex items-center justify-between border-b border-[#181D27] pb-4">
           <button
             onClick={() => router.back()}

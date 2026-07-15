@@ -61,7 +61,7 @@ export default function PostDetailPage() {
     <div className="relative min-h-screen bg-black text-white px-4 pt-20 pb-32 font-sans flex flex-col items-center">
       {/* GLOBAL FIGMA NAVBAR VARIANT (BACK NAVIGATION WITH PROFILE DRAWER) */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-[#0A0D12]/90 backdrop-blur-md border-b border-[#181D27] flex items-center justify-center z-40 px-4">
-        <div className="w-full max-w-[361px] flex items-center justify-between">
+        <div className="w-full max-w-[361px] lg:max-w-150 flex items-center justify-between">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors cursor-pointer"
@@ -81,7 +81,7 @@ export default function PostDetailPage() {
         </div>
       </div>
 
-      <div className="w-full max-w-[361px] flex flex-col gap-6 mt-4">
+      <div className="w-full max-w-[361px] lg:max-w-150 flex flex-col gap-6 mt-4">
         {post ? (
           <TimelineCard
             post={post}

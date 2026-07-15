@@ -123,7 +123,7 @@ function FeedContent() {
 
   return (
     <div className="w-full min-h-screen bg-black text-white px-4 pt-20 pb-28 flex flex-col items-center font-sans">
-      <div className="w-full max-w-90.25 flex flex-col gap-4">
+      <div className="w-full max-w-90.25 lg:max-w-150 flex flex-col gap-4">
         {/* HEADER BRAND & LAYOUT SWITCHER */}
         <div className="w-full border-b border-[#181D27] pb-3 mb-2 flex items-center justify-between">
           <h1 className="text-xl font-black tracking-tight bg-linear-to-r from-[#6936F2] to-[#AD3AE7] bg-clip-text text-transparent">

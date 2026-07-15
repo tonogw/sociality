@@ -89,7 +89,7 @@ export default function PostCommentsPage() {
 
   return (
     <div className="w-full min-h-screen bg-black text-[#FDFDFD] font-sans flex flex-col items-center pt-6 pb-32">
-      <div className="w-full max-w-[393px] flex flex-col gap-4 px-4">
+      <div className="w-full max-w-[393px] lg:max-w-150 flex flex-col gap-4 px-4">
         {/* TOMBOL KEMBALI */}
         <div className="w-full flex justify-end">
           <button

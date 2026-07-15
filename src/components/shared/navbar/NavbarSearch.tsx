@@ -44,7 +44,7 @@ export default function NavbarSearch() {
   // };
 
   return (
-    <nav className="fixed w-full px-4 top-0 left-1/2 -translate-x-1/2 z-50 flex h-16 max-w-98.25 items-center gap-3 border-b border-[#181D27] bg-black">
+    <nav className="fixed w-full px-4 top-0 left-1/2 -translate-x-1/2 z-50 flex h-16 max-w-98.25 lg:max-w-150 items-center gap-3 border-b border-[#181D27] bg-black">
       {searchMode ? (
         <>
           <SearchBar

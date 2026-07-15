@@ -56,7 +56,7 @@ export default function ConnectionsModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-95 bg-[#0A0D12] border border-[#181D27] rounded-2xl p-6 flex flex-col gap-4 relative max-h-[80vh] shadow-2xl">
+      <div className="w-full max-w-95  bg-[#0A0D12] border border-[#181D27] rounded-2xl p-6 flex flex-col gap-4 relative max-h-[80vh] shadow-2xl">
         {/* HEADER MODAL */}
         <button
           onClick={onClose}

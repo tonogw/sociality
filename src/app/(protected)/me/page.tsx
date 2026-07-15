@@ -229,7 +229,7 @@ export default function MyProfilePage() {
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-90.25 flex flex-col gap-4">
+      <div className="w-full max-w-90.25 lg:max-w-150 flex flex-col gap-4">
         <ProfileHeader
           name={user?.name}
           username={user?.username}

@@ -20,7 +20,9 @@ export default function MainLayout({
       <Suspense fallback={null}>
         <Navbar />
       </Suspense>
-      <main className="flex-1 w-full max-w-98.25 mx-auto">{children}</main>
+      <main className="flex-1 w-full max-w-98.25 lg:max-w-360 mx-auto">
+        {children}
+      </main>
     </div>
   );
 }

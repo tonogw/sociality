@@ -27,8 +27,6 @@ const SYSTEM_ROUTES = new Set<string>([
 export default function Navbar({ fromQuery, lastPage }: NavbarProps) {
   const pathname = usePathname();
 
-  console.log(pathname);
-
   if (pathname.startsWith("/search")) {
     return <NavbarSearch />;
   }
