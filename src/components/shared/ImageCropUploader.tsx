@@ -11,6 +11,11 @@ interface ImageCropUploaderProps {
   // 🟢 SEKARANG MENERIMA CALLBACK: Mengirim file dan caption ke luar, bukan nembak API sendiri
   onUpload: (croppedFile: File, caption: string) => Promise<void>;
   isUploading: boolean;
+
+  // Combined
+  title?: string;
+  submitLabel?: string;
+  showCaption?: boolean;
 }
 
 export default function ImageCropUploader({
@@ -18,6 +23,10 @@ export default function ImageCropUploader({
   onClose,
   onUpload,
   isUploading,
+  // Combined
+  title = "Add Post",
+  submitLabel = "Share",
+  showCaption = true,
 }: ImageCropUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -106,7 +115,8 @@ export default function ImageCropUploader({
         croppedAreaPixels,
       );
       // Lempar data ke halaman utama yang bertanggung jawab penuh atas mutasi data
-      await onUpload(finalCroppedFile, caption);
+      // await onUpload(finalCroppedFile, caption);
+      await onUpload(finalCroppedFile, showCaption ? caption : "");
 
       // Reset state form setelah berhasil
       setImageSrc(null);
@@ -133,7 +143,7 @@ export default function ImageCropUploader({
         </button>
 
         <h3 className="text-sm font-bold text-white tracking-tight text-center border-b border-[#181D27] pb-3 font-sans">
-          Add Post
+          {title}
         </h3>
 
         <input
@@ -208,20 +218,22 @@ export default function ImageCropUploader({
               onSubmit={handleSubmitAction}
               className="flex flex-col gap-4 w-full"
             >
-              <div className="flex flex-col gap-1 w-full">
-                <label className="text-xs font-bold text-zinc-400">
-                  Caption
-                </label>
-                <div className="w-full bg-black border border-[#181D27] rounded-xl p-3 flex">
-                  <textarea
-                    rows={3}
-                    value={caption}
-                    onChange={(e) => setCaption(e.target.value)}
-                    placeholder="Create your caption"
-                    className="w-full bg-transparent text-white text-sm focus:outline-none resize-none placeholder-zinc-600"
-                  />
+              {showCaption && (
+                <div className="flex flex-col gap-1 w-full">
+                  <label className="text-xs font-bold text-zinc-400">
+                    Caption
+                  </label>
+                  <div className="w-full bg-black border border-[#181D27] rounded-xl p-3 flex">
+                    <textarea
+                      rows={3}
+                      value={caption}
+                      onChange={(e) => setCaption(e.target.value)}
+                      placeholder="Create your caption"
+                      className="w-full bg-transparent text-white text-sm focus:outline-none resize-none placeholder-zinc-600"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <button
                 type="submit"
@@ -229,7 +241,7 @@ export default function ImageCropUploader({
                 className="w-full h-11 bg-[#6936F2] hover:bg-[#522BC8] disabled:bg-zinc-900 disabled:text-zinc-600 font-bold rounded-full text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg"
               >
                 <Send size={14} />{" "}
-                <span>{isUploading ? "Uploading..." : "Share"}</span>
+                <span>{isUploading ? "Uploading..." : submitLabel}</span>
               </button>
             </form>
           </div>
