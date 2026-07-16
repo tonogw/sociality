@@ -9,13 +9,15 @@ interface ImageCropUploaderProps {
   isOpen: boolean;
   onClose: () => void;
   // 🟢 SEKARANG MENERIMA CALLBACK: Mengirim file dan caption ke luar, bukan nembak API sendiri
-  onUpload: (croppedFile: File, caption: string) => Promise<void>;
+  // onUpload: (croppedFile: File, caption: string) => Promise<void>;
+  onUpload: (croppedFile: File) => Promise<void>;
   isUploading: boolean;
 
   // Combined
-  title?: string;
-  submitLabel?: string;
-  showCaption?: boolean;
+  // title?: string;
+  // submitLabel?: string;
+  // showCaption?: boolean;
+  mode?: "avatar" | "post";
 }
 
 export default function ImageCropUploader({
@@ -24,10 +26,12 @@ export default function ImageCropUploader({
   onUpload,
   isUploading,
   // Combined
-  title = "Add Post",
-  submitLabel = "Share",
-  showCaption = true,
+  // title = "Add Post",
+  // submitLabel = "Share",
+  // showCaption = true,
+  mode = "avatar",
 }: ImageCropUploaderProps) {
+  const isPostMode = mode === "post";
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
@@ -116,7 +120,7 @@ export default function ImageCropUploader({
       );
       // Lempar data ke halaman utama yang bertanggung jawab penuh atas mutasi data
       // await onUpload(finalCroppedFile, caption);
-      await onUpload(finalCroppedFile, showCaption ? caption : "");
+      await onUpload(finalCroppedFile);
 
       // Reset state form setelah berhasil
       setImageSrc(null);
@@ -143,7 +147,8 @@ export default function ImageCropUploader({
         </button>
 
         <h3 className="text-sm font-bold text-white tracking-tight text-center border-b border-[#181D27] pb-3 font-sans">
-          {title}
+          {/* {title} */}
+          {mode === "avatar" ? "Edit Avatar" : "Add Post"}
         </h3>
 
         <input
@@ -218,7 +223,7 @@ export default function ImageCropUploader({
               onSubmit={handleSubmitAction}
               className="flex flex-col gap-4 w-full"
             >
-              {showCaption && (
+              {isPostMode && (
                 <div className="flex flex-col gap-1 w-full">
                   <label className="text-xs font-bold text-zinc-400">
                     Caption
@@ -240,8 +245,16 @@ export default function ImageCropUploader({
                 disabled={isUploading}
                 className="w-full h-11 bg-[#6936F2] hover:bg-[#522BC8] disabled:bg-zinc-900 disabled:text-zinc-600 font-bold rounded-full text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg"
               >
-                <Send size={14} />{" "}
-                <span>{isUploading ? "Uploading..." : submitLabel}</span>
+                {mode === "avatar" ? (
+                  <>
+                    <Send size={14} />{" "}
+                    <span>{isUploading ? "Uploading..." : "Save"}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{isUploading ? "Uploading..." : "Share"}</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
