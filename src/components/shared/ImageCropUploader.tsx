@@ -124,7 +124,13 @@ export default function ImageCropUploader({
 
       // Reset state form setelah berhasil
       setImageSrc(null);
-      setCaption("");
+      setCroppedAreaPixels(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      // setCaption("");
     } catch (err) {
       console.error(err);
       toast.error("Gagal memproses pemotongan gambar.");

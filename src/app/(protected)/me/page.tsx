@@ -155,10 +155,10 @@ export default function MyProfilePage() {
 
   const handleAvatarCropped = async (
     croppedFile: File,
-    caption?: string,
+    // caption?: string,
   ): Promise<void> => {
-    if (caption) {
-    }
+    // if (caption) {
+    // }
 
     setSelectedAvatarFile(croppedFile);
 
@@ -193,12 +193,15 @@ export default function MyProfilePage() {
     updateProfileMutation.mutate(formData);
   };
 
-  const handleCreatePost = async (croppedFile: File, caption?: string) => {
+  const handleCreatePost = async (
+    croppedFile: File,
+    // caption?: string
+  ) => {
     const formData = new FormData();
 
     formData.append("image", croppedFile);
 
-    formData.append("caption", caption || "New Moment Shared");
+    formData.append("caption", "New Moment Shared");
 
     createPostMutation.mutate(formData, {
       onSuccess: async () => {
@@ -309,6 +312,7 @@ export default function MyProfilePage() {
       />
 
       <ImageCropUploader
+        mode="post"
         isOpen={isCreatePostOpen}
         onClose={() => setIsCreatePostOpen(false)}
         onUpload={handleCreatePost}
@@ -316,6 +320,7 @@ export default function MyProfilePage() {
       />
 
       <ImageCropUploader
+        mode="avatar"
         isOpen={isAvatarCropOpen}
         onClose={() => setIsAvatarCropOpen(false)}
         onUpload={handleAvatarCropped}
