@@ -106,7 +106,10 @@ export default function LoginPage() {
         >
           {/* Field: Email */}
           <div className="flex flex-col gap-1 w-full">
-            <label className="text-xs font-bold text-white tracking-wide">
+            <label
+              id="current-email"
+              className="text-xs font-bold text-white tracking-wide"
+            >
               Email
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                 <input

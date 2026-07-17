@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Cropper, { Point, Area } from "react-easy-crop";
 import { X, Camera, ZoomIn, RefreshCw, Trash2, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -14,9 +14,10 @@ interface ImageCropUploaderProps {
   isUploading: boolean;
 
   // Combined
-  // title?: string;
-  // submitLabel?: string;
-  // showCaption?: boolean;
+  title?: string;
+  aspect?: number;
+  submitLabel?: string;
+  showCaption?: boolean;
   mode?: "avatar" | "post";
 }
 
@@ -26,12 +27,13 @@ export default function ImageCropUploader({
   onUpload,
   isUploading,
   // Combined
-  // title = "Add Post",
-  // submitLabel = "Share",
-  // showCaption = true,
+  title = "Add Post",
+  aspect = 1,
+  submitLabel = "Share",
+  showCaption = true,
   mode = "avatar",
 }: ImageCropUploaderProps) {
-  const isPostMode = mode === "post";
+  // const isPostMode = mode === "post";
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
@@ -46,6 +48,12 @@ export default function ImageCropUploader({
     },
     [],
   );
+
+  useEffect(() => {
+    if (isOpen && !imageSrc) {
+      fileInputRef.current?.click();
+    }
+  }, [isOpen, imageSrc]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -185,7 +193,7 @@ export default function ImageCropUploader({
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
-                aspect={1 / 1}
+                aspect={aspect}
                 onCropChange={setCrop}
                 onCropComplete={onCropComplete}
                 onZoomChange={setZoom}
@@ -229,13 +237,17 @@ export default function ImageCropUploader({
               onSubmit={handleSubmitAction}
               className="flex flex-col gap-4 w-full"
             >
-              {isPostMode && (
+              {showCaption && (
                 <div className="flex flex-col gap-1 w-full">
-                  <label className="text-xs font-bold text-zinc-400">
+                  <label
+                    id="label-caption-textarea"
+                    className="text-xs font-bold text-zinc-400"
+                  >
                     Caption
                   </label>
                   <div className="w-full bg-black border border-[#181D27] rounded-xl p-3 flex">
                     <textarea
+                      id="textarea-caption"
                       rows={3}
                       value={caption}
                       onChange={(e) => setCaption(e.target.value)}
@@ -251,16 +263,9 @@ export default function ImageCropUploader({
                 disabled={isUploading}
                 className="w-full h-11 bg-[#6936F2] hover:bg-[#522BC8] disabled:bg-zinc-900 disabled:text-zinc-600 font-bold rounded-full text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg"
               >
-                {mode === "avatar" ? (
-                  <>
-                    <Send size={14} />{" "}
-                    <span>{isUploading ? "Uploading..." : "Save"}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>{isUploading ? "Uploading..." : "Share"}</span>
-                  </>
-                )}
+                {showCaption && <Send size={14} />}
+
+                <span>{isUploading ? "Uploading..." : submitLabel}</span>
               </button>
             </form>
           </div>

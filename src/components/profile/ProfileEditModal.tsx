@@ -17,7 +17,7 @@ interface Props {
   previewUrl: string | null;
   avatarUrl?: string | null;
 
-  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onEditAvatar: () => void;
 
   register: UseFormRegister<UpdateUserInput>;
   handleSubmit: UseFormHandleSubmit<UpdateUserInput>;
@@ -33,7 +33,7 @@ export default function ProfileEditModal({
   onClose,
   previewUrl,
   avatarUrl,
-  handleFileChange,
+  onEditAvatar,
   register,
   handleSubmit,
   onSubmit,
@@ -46,8 +46,9 @@ export default function ProfileEditModal({
     <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
       <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col items-center gap-5 relative max-h-[90vh] overflow-y-auto shadow-2xl">
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-zinc-500 hover:text-white"
+          className="absolute top-4 right-4 text-zinc-500 hover:text-white cursor-pointer"
         >
           <X size={20} />
         </button>
@@ -55,7 +56,11 @@ export default function ProfileEditModal({
         <h3 className="text-lg font-bold text-white">Edit Profile</h3>
 
         <div className="flex flex-col items-center gap-2">
-          <label className="relative group cursor-pointer w-20 h-20 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden">
+          <button
+            type="button"
+            onClick={onEditAvatar}
+            className="relative group cursor-pointer w-20 h-20 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden"
+          >
             {previewUrl || avatarUrl ? (
               <Image
                 src={previewUrl || avatarUrl || "/placeholder.png"}
@@ -63,6 +68,7 @@ export default function ProfileEditModal({
                 fill
                 className="object-cover"
                 unoptimized
+                loading="eager"
                 sizes="80px"
               />
             ) : (
@@ -74,15 +80,7 @@ export default function ProfileEditModal({
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
               <Camera size={18} />
             </div>
-
-            <input
-              id="change-image-file"
-              hidden
-              type="file"
-              accept="image/png,image/jpeg,image/jpg"
-              onChange={handleFileChange}
-            />
-          </label>
+          </button>
 
           <span className="text-xs text-zinc-400">Tap avatar to change</span>
         </div>
@@ -92,10 +90,11 @@ export default function ProfileEditModal({
           className="w-full flex flex-col gap-4"
         >
           <div>
-            <label className="text-xs font-bold">Name</label>
+            <label id="edit-name" className="text-xs font-bold">
+              Name
+            </label>
 
             <input
-              id="fullname"
               {...register("name")}
               className="w-full mt-1 h-11 rounded-xl border border-[#181D27] bg-[#0A0D12] px-4"
             />
@@ -106,10 +105,11 @@ export default function ProfileEditModal({
           </div>
 
           <div>
-            <label className="text-xs font-bold">Username</label>
+            <label id="edit-username" className="text-xs font-bold">
+              Username
+            </label>
 
             <input
-              id="user-name"
               {...register("username")}
               className="w-full mt-1 h-11 rounded-xl border border-[#181D27] bg-[#0A0D12] px-4"
             />
@@ -122,10 +122,11 @@ export default function ProfileEditModal({
           </div>
 
           <div>
-            <label className="text-xs font-bold">Phone</label>
+            <label id="edit-phone" className="text-xs font-bold">
+              Phone
+            </label>
 
             <input
-              id="telephone"
               {...register("phone")}
               className="w-full mt-1 h-11 rounded-xl border border-[#181D27] bg-[#0A0D12] px-4"
             />
@@ -138,7 +139,9 @@ export default function ProfileEditModal({
           </div>
 
           <div>
-            <label className="text-xs font-bold">Bio</label>
+            <label id="edit-bio" className="text-xs font-bold">
+              Bio
+            </label>
 
             <textarea
               rows={3}
@@ -152,8 +155,9 @@ export default function ProfileEditModal({
           </div>
 
           <button
+            type="submit"
             disabled={isSaving}
-            className="h-11 rounded-full bg-[#6936F2] font-bold flex items-center justify-center gap-2"
+            className="h-11 rounded-full bg-[#6936F2] font-bold flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             {isSaving && <Loader2 size={16} className="animate-spin" />}
 

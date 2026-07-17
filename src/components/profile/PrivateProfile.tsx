@@ -12,7 +12,7 @@ export default function PrivateProfile() {
         <h4 className="text-sm font-bold text-white">
           This Account is Private
         </h4>
-        <p className="text-xs text-zinc-500 max-w-[220px]">
+        <p className="text-xs text-zinc-500 max-w-55">
           Follow this account to explore their captured memories.
         </p>
       </div>

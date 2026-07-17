@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { AxiosError } from "axios";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ import ProfileEmptyState from "@/components/profile/ProfileEmptyState";
 import ProfileEditModal from "@/components/profile/ProfileEditModal";
 
 import { meService } from "@/services/meService";
+import { useMe } from "@/queries/me/useGetMe";
 
 import { useMePosts } from "@/queries/me/useMePosts";
 import { useMeSaved } from "@/queries/me/useMeSaved";
@@ -60,12 +61,14 @@ export default function MyProfilePage() {
     null,
   );
 
-  const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
+  const [croppedAvatarUrl, setCroppedAvatarUrl] = useState<string | null>(null);
 
-  const { data: profileData, isLoading } = useQuery({
-    queryKey: ["my-profile"],
-    queryFn: meService.getMe,
-  });
+  // const { data: profileData, isLoading } = useQuery({
+  //   queryKey: ["my-profile"],
+  //   queryFn: meService.getMe,
+  // });
+
+  const { data: profileData, isLoading } = useMe();
 
   const { data: mePostsData } = useMePosts(1, 20);
 
@@ -120,7 +123,7 @@ export default function MyProfilePage() {
 
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["my-profile"],
+        queryKey: ["me"],
       });
 
       await queryClient.invalidateQueries({
@@ -137,7 +140,7 @@ export default function MyProfilePage() {
 
       setIsModalOpen(false);
       setSelectedAvatarFile(null);
-      setPreviewAvatarUrl(null);
+      setCroppedAvatarUrl(null);
     },
 
     onError: (error: AxiosError<ApiErrorResponse>) => {
@@ -145,13 +148,32 @@ export default function MyProfilePage() {
     },
   });
 
-  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  // const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
 
-    if (!file) return;
+  //   if (!file) return;
 
-    setIsAvatarCropOpen(true);
-  };
+  //   setIsAvatarCropOpen(true);
+  // };
+
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      return await meService.updateMe(formData);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["me"],
+      });
+
+      toast.success("avatar updated successfully.");
+    },
+
+    onError: () => {
+      toast.error("Failed to update avatar.");
+    },
+  });
 
   const handleAvatarCropped = async (
     croppedFile: File,
@@ -162,14 +184,22 @@ export default function MyProfilePage() {
 
     setSelectedAvatarFile(croppedFile);
 
-    setPreviewAvatarUrl(URL.createObjectURL(croppedFile));
+    const objectUrl = URL.createObjectURL(croppedFile);
+
+    setCroppedAvatarUrl(objectUrl); //(URL.createObjectURL(croppedFile));
 
     setIsAvatarCropOpen(false);
 
-    toast.success("Avatar updated.");
+    setIsModalOpen(true);
+
+    // updateAvatarMutation.mutate(croppedFile);
+
+    // toast.success("Avatar updated.");
   };
 
   const onSubmit = (data: UpdateUserInput) => {
+    console.log("FORM SUBMITTED");
+    console.log(data);
     const isPrivate = user?.bio?.includes("[private:true]") ?? false;
 
     const finalBio = isPrivate ? `${data.bio} [private:true]` : data.bio;
@@ -230,6 +260,11 @@ export default function MyProfilePage() {
     );
   }
 
+  console.log({
+    name: user?.name,
+    avatar: user?.avatarUrl,
+  });
+
   return (
     <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
       <div className="w-full max-w-90.25 lg:max-w-150 flex flex-col gap-4">
@@ -237,12 +272,12 @@ export default function MyProfilePage() {
           name={user?.name}
           username={user?.username}
           avatarUrl={user?.avatarUrl}
-          isOwner
+          isOwner={true}
         />
 
         <OwnerActions isOwner onEditProfile={() => setIsModalOpen(true)} />
 
-        <p className="text-sm text-[#FDFDFD] leading-relaxed break-words">
+        <p className="text-sm text-[#FDFDFD] leading-relaxed wrap-break-words">
           {getCleanBio(user?.bio) || "Creating unforgettable moments! 📸✨"}
         </p>
 
@@ -317,6 +352,10 @@ export default function MyProfilePage() {
         onClose={() => setIsCreatePostOpen(false)}
         onUpload={handleCreatePost}
         isUploading={createPostMutation.isPending}
+        title="Add Post"
+        aspect={1}
+        showCaption={true}
+        submitLabel="Save"
       />
 
       <ImageCropUploader
@@ -325,14 +364,22 @@ export default function MyProfilePage() {
         onClose={() => setIsAvatarCropOpen(false)}
         onUpload={handleAvatarCropped}
         isUploading={false}
+        title="Edit Avatar"
+        aspect={1}
+        showCaption={false}
+        submitLabel="Save"
       />
 
       <ProfileEditModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        previewUrl={previewAvatarUrl}
+        previewUrl={croppedAvatarUrl}
         avatarUrl={user?.avatarUrl}
-        handleFileChange={handleAvatarFileChange}
+        // handleFileChange={handleAvatarFileChange}
+        onEditAvatar={() => {
+          setIsModalOpen(false);
+          setIsAvatarCropOpen(true);
+        }}
         register={register}
         handleSubmit={handleSubmit}
         onSubmit={onSubmit}

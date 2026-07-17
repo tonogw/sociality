@@ -117,7 +117,10 @@ export default function RegisterPage() {
         >
           {/* Field: Name */}
           <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm font-bold text-white tracking-wide">
+            <label
+              id="name"
+              className="text-sm font-bold text-white tracking-wide"
+            >
               Name
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                 <input
@@ -139,7 +142,10 @@ export default function RegisterPage() {
 
           {/* Field: Username */}
           <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm font-bold text-white tracking-wide">
+            <label
+              id="username"
+              className="text-sm font-bold text-white tracking-wide"
+            >
               Username
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                 <input
@@ -161,7 +167,10 @@ export default function RegisterPage() {
 
           {/* Field: Number Phone */}
           <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm font-bold text-white tracking-wide">
+            <label
+              id="phone-number"
+              className="text-sm font-bold text-white tracking-wide"
+            >
               Phone Number
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                 <input
@@ -183,7 +192,10 @@ export default function RegisterPage() {
 
           {/* Field: Email */}
           <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm font-bold text-white tracking-wide">
+            <label
+              id="email"
+              className="text-sm font-bold text-white tracking-wide"
+            >
               Email
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center">
                 <input
@@ -205,7 +217,10 @@ export default function RegisterPage() {
 
           {/* Field: Password */}
           <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm font-bold text-white tracking-wide">
+            <label
+              id="new-password"
+              className="text-sm font-bold text-white tracking-wide"
+            >
               Password
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center justify-between">
                 <input
@@ -234,7 +249,10 @@ export default function RegisterPage() {
 
           {/* Field: Confirm Password */}
           <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm font-bold text-white tracking-wide">
+            <label
+              id="confirm-new-password"
+              className="text-sm font-bold text-white tracking-wide"
+            >
               Confirm Password
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center justify-between">
                 <input
