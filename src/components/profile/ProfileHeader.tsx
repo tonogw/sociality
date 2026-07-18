@@ -18,7 +18,7 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-16 h-16 rounded-full bg-zinc-800 border border-[#181D27] overflow-hidden flex items-center justify-center relative">
+      <div className="w-16 h-16 lg:h-20 rounded-full bg-zinc-800 border border-[#181D27] overflow-hidden flex items-center justify-center relative">
         {avatarUrl ? (
           <Image
             src={avatarUrl}
@@ -29,7 +29,7 @@ export default function ProfileHeader({
             sizes="64px"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xl font-bold text-white">
+          <div className="w-full h-full bg-linear-to-tr from-[#6936F2] to-[#AD3AE7] flex items-center justify-center text-xl font-bold text-white">
             {name?.charAt(0).toUpperCase() ?? "U"}
           </div>
         )}

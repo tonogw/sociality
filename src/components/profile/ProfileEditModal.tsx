@@ -7,6 +7,7 @@ import {
   UseFormRegister,
   FieldErrors,
 } from "react-hook-form";
+import Navbar from "../shared/Navbar";
 
 import type { UpdateUserInput } from "@/validations/auth";
 
@@ -43,8 +44,9 @@ export default function ProfileEditModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-[380px] bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col items-center gap-5 relative max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex  items-center justify-center z-50 p-4">
+      <Navbar />
+      <div className="w-full max-w-95 lg:max-w-200 lg:max-h-169.75 bg-black border border-[#181D27] rounded-2xl p-6 flex flex-col lg:flex-row lg:gap-8 lg:items-start items-center gap-5 relative max-h-[90vh] overflow-y-auto shadow-2xl">
         <button
           type="button"
           onClick={onClose}
@@ -53,20 +55,20 @@ export default function ProfileEditModal({
           <X size={20} />
         </button>
 
-        <h3 className="text-lg font-bold text-white">Edit Profile</h3>
+        <h3 className="text-lg font-bold text-white lg:hidden">Edit Profile</h3>
 
         <div className="flex flex-col items-center gap-2">
           <button
             type="button"
             onClick={onEditAvatar}
-            className="relative group cursor-pointer w-20 h-20 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden"
+            className="relative group cursor-pointer w-20 lg:w-30 h-20 lg:h-30 rounded-full bg-zinc-900 border border-[#181D27] overflow-hidden"
           >
             {previewUrl || avatarUrl ? (
               <Image
                 src={previewUrl || avatarUrl || "/placeholder.png"}
                 alt="avatar"
                 fill
-                className="object-cover"
+                className="object-cover "
                 unoptimized
                 loading="eager"
                 sizes="80px"
@@ -89,7 +91,7 @@ export default function ProfileEditModal({
           onSubmit={handleSubmit(onSubmit)}
           className="w-full flex flex-col gap-4"
         >
-          <div>
+          <div className="">
             <label id="edit-name" className="text-xs font-bold">
               Name
             </label>

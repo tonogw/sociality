@@ -131,7 +131,10 @@ export default function LoginPage() {
 
           {/* Field: Password */}
           <div className="flex flex-col gap-1 w-full">
-            <label className="text-xs font-bold text-white tracking-wide">
+            <label
+              id="password"
+              className="text-xs font-bold text-white tracking-wide"
+            >
               Password
               <div className="w-full h-12 bg-[#0A0D12] border border-[#181D27] rounded-xl px-4 flex items-center justify-between">
                 <input

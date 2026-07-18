@@ -156,24 +156,24 @@ export default function MyProfilePage() {
   //   setIsAvatarCropOpen(true);
   // };
 
-  const updateAvatarMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("avatar", file);
-      return await meService.updateMe(formData);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["me"],
-      });
+  // const updateAvatarMutation = useMutation({
+  //   mutationFn: async (file: File) => {
+  //     const formData = new FormData();
+  //     formData.append("avatar", file);
+  //     return await meService.updateMe(formData);
+  //   },
+  //   onSuccess: async () => {
+  //     await queryClient.invalidateQueries({
+  //       queryKey: ["me"],
+  //     });
 
-      toast.success("avatar updated successfully.");
-    },
+  //     toast.success("avatar updated successfully.");
+  //   },
 
-    onError: () => {
-      toast.error("Failed to update avatar.");
-    },
-  });
+  //   onError: () => {
+  //     toast.error("Failed to update avatar.");
+  //   },
+  // });
 
   const handleAvatarCropped = async (
     croppedFile: File,
@@ -266,8 +266,8 @@ export default function MyProfilePage() {
   });
 
   return (
-    <div className="relative min-h-screen bg-black text-white px-4 pt-24 pb-32 font-sans flex flex-col items-center">
-      <div className="w-full max-w-90.25 lg:max-w-150 flex flex-col gap-4">
+    <div className="relative min-h-screen bg-black text-white px-4 pt-24 lg:pt-30 pb-32 font-sans flex flex-col  items-center">
+      <div className="w-full max-w-90.25 lg:max-w-150 flex flex-col  gap-4">
         <ProfileHeader
           name={user?.name}
           username={user?.username}
